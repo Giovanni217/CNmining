@@ -488,6 +488,18 @@ public class CNMining
     	return new Object[] { flexDiagram, diagram.startTaskNodes, diagram.endTaskNodes, diagram.annotations };
                
 	}
+        
+        public static void addForbiddenVincoli(ConstraintsManager vincoli, Constraint constr){
+                Iterator localIterator2 = constr.getHeadList().iterator();
+		Iterator localIterator1 = constr.getBodyList().iterator();
+                String body = null;
+                String head = null;
+		while(localIterator1.hasNext() && localIterator2.hasNext()){
+                    body = (String)localIterator1.next();
+                    head = (String)localIterator2.next();
+                    vincoli.forbidden.add(new Forbidden(body, head));
+		}
+        }
 	
 	private boolean caricaVincoli(ConstraintsManager vincoli, Settings settings){
 		if (settings.areConstraintsAvailable()) {
@@ -515,13 +527,10 @@ public class CNMining
 						} 
 						else 
 						{ 
-							Iterator localIterator2 = constr.getHeadList().iterator();
-							Iterator localIterator1 = constr.getBodyList().iterator();
-							while(localIterator1.hasNext() && localIterator2.hasNext()){
-								String body = (String)localIterator1.next();
-								String head = (String)localIterator2.next();
-								vincoli.forbidden.add(new Forbidden(body, head));
-							}
+                                                    
+                                                    addForbiddenVincoli(vincoli, constr);
+                                                    
+							
 							vincoli.negati.add(constr);
 						}
 					}
@@ -530,19 +539,14 @@ public class CNMining
 		}
 		return true;
 	}   
-	
-	public Graph costruisciGrafoUnfolded(ObjectIntOpenHashMap<String> map, double[][] bestNextMatrix){
-		Graph graph = new Graph();
-		 
-		Object[] keys = map.keys;
-		int[] values = map.values;
-		boolean[] states = map.allocated;
- 
-		for (int iii = 0; iii < states.length; iii++)
+        
+        public static void preparazioneGrafoUnfolded(Object[] keys, int[] values, boolean[] states, Graph graph){
+            Node node = null;
+            for (int iii = 0; iii < states.length; iii++)
 		{
 			if (states[iii] != false)
 			{
-				Node node = new Node((String)keys[iii], values[iii]);
+				node = new Node((String)keys[iii], values[iii]);
 				Object[] nKeys = graph.getMap().keys;
 				boolean[] nStates = graph.getMap().allocated;
      
@@ -559,6 +563,18 @@ public class CNMining
 				}
 			}
 		}
+        }
+	
+	public Graph costruisciGrafoUnfolded(ObjectIntOpenHashMap<String> map, double[][] bestNextMatrix){
+		Graph graph = new Graph();
+		 
+		Object[] keys = map.keys;
+		int[] values = map.values;
+		boolean[] states = map.allocated;
+ 
+                preparazioneGrafoUnfolded(keys, values, states, graph);
+                
+		
  
 		for (int p = 0; p < bestNextMatrix.length; p++) {
 			for (int r = 0; r < bestNextMatrix[0].length; r++)
@@ -575,29 +591,9 @@ public class CNMining
 		}
 		return graph;
 	}
- 
-	public Graph rimuoviAttivitaFittizie(Graph folded_g, ObjectIntOpenHashMap<String> folded_map, ObjectObjectOpenHashMap<String, ObjectArrayList<String>> traccia_attivita, ObjectObjectOpenHashMap<String, ObjectArrayList<String>> attivita_traccia, Node start, Node end, XLog log, ObjectArrayList<Node> startActivities, ObjectArrayList<Node> endActivities)
-	{
-		ObjectArrayList<Node> startActs = new ObjectArrayList<Node>();
-		ObjectArrayList<Node> endActs = new ObjectArrayList<Node>();
-     
-		for (int i = 0; i < log.size(); i++)
-		{
-			XTrace trace = (XTrace)log.get(i);
-			trace.remove(0);
-			trace.remove(trace.size() - 1);
-		}
-		
-		int startID = start.getID_attivita();     
-		int endID = end.getID_attivita();
-     
-		attivita_traccia.remove(start.getNomeAttivita());
-		attivita_traccia.remove(end.getNomeAttivita());
-		
-		Object[] values = traccia_attivita.values;
-		boolean[] states = traccia_attivita.allocated;
-     
-		for (int iii = 0; iii < states.length; iii++)
+        
+        public static void RFO(boolean[] states, Object[] values, Node start, Node end){
+            for (int iii = 0; iii < states.length; iii++)
 		{
 			if (states[iii] != false) {
 				ObjectArrayList<String> vals = (ObjectArrayList)values[iii];
@@ -605,9 +601,12 @@ public class CNMining
 				vals.removeFirstOccurrence(end.getNomeAttivita());
 			}
 		}
-     
-		for (int ii = 0; ii < folded_g.getLista_archi().size(); ii++) {
-			Edge e = (Edge)folded_g.getLista_archi().get(ii);
+        }
+        
+        public static void RE(Graph folded_g, ObjectArrayList<Node> startActs, ObjectArrayList<Node> endActs, Node start, Node end){
+            Edge e = null;
+            for (int ii = 0; ii < folded_g.getLista_archi().size(); ii++) {
+			e = (Edge)folded_g.getLista_archi().get(ii);
 			if (e.getX().equals(start)) {
 				folded_g.getLista_archi().removeAllOccurrences(e);
 				startActs.add(e.getY());
@@ -624,16 +623,11 @@ public class CNMining
 				ii--;
 			}
 		}
- 
-		folded_g.getMap().remove(start);
-		folded_g.getMap().remove(end);
-		folded_g.listaNodi().removeFirstOccurrence(start);
-		folded_g.listaNodi().removeFirstOccurrence(end);
-		folded_map.remove(start.getNomeAttivita());
-		folded_map.remove(end.getNomeAttivita());
-     
-		Graph cleanG = new Graph();
-		Node n;
+        }
+        
+        public static Graph CNN(Graph folded_g, Graph cleanG, int startID, int endID, ObjectIntOpenHashMap<String> folded_map){
+            Node n;
+                
 		for (int ii = 0; ii < folded_g.listaNodi().size(); ii++) {
 			n = (Node)folded_g.listaNodi().get(ii);
 			if ((n.getID_attivita() > startID) && (n.getID_attivita() < endID))
@@ -656,6 +650,45 @@ public class CNMining
 				cleanG.getMap().put(newNode, new ObjectOpenHashSet());
 			}
 		}
+                return cleanG;
+        }
+ 
+	public Graph rimuoviAttivitaFittizie(Graph folded_g, ObjectIntOpenHashMap<String> folded_map, ObjectObjectOpenHashMap<String, ObjectArrayList<String>> traccia_attivita, ObjectObjectOpenHashMap<String, ObjectArrayList<String>> attivita_traccia, Node start, Node end, XLog log, ObjectArrayList<Node> startActivities, ObjectArrayList<Node> endActivities)
+	{
+		ObjectArrayList<Node> startActs = new ObjectArrayList<Node>();
+		ObjectArrayList<Node> endActs = new ObjectArrayList<Node>();
+     
+		for (int i = 0; i < log.size(); i++)
+		{
+			XTrace trace = (XTrace)log.get(i);
+			trace.remove(0);
+			trace.remove(trace.size() - 1);
+		}
+		
+		int startID = start.getID_attivita();     
+		int endID = end.getID_attivita();
+     
+		attivita_traccia.remove(start.getNomeAttivita());
+		attivita_traccia.remove(end.getNomeAttivita());
+		
+		Object[] values = traccia_attivita.values;
+		boolean[] states = traccia_attivita.allocated;
+     
+                RFO(states, values, start, end);//Remove First Occurence
+     
+                RE(folded_g, startActs, endActs);//Remove Edge
+                
+		folded_g.getMap().remove(start);
+		folded_g.getMap().remove(end);
+		folded_g.listaNodi().removeFirstOccurrence(start);
+		folded_g.listaNodi().removeFirstOccurrence(end);
+		folded_map.remove(start.getNomeAttivita());
+		folded_map.remove(end.getNomeAttivita());
+     
+                Graph cleanG = new Graph();
+                cleanG = CNN(folded_g, cleanG, startID, endID, folded_map);//Create New Nodes
+                
+		
      
  
 		for (ObjectCursor<Edge> ee : folded_g.getLista_archi()) {
@@ -3012,5 +3045,3 @@ public class CNMining
 		}
 	}
 }
-
-
