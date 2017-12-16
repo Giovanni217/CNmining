@@ -243,6 +243,13 @@ public class CNMining
     	}
         }
         
+        public static void verificaVincoliPositivi(CNMining cnmining, Graph grafoPG0, ConstraintsManager vincoli, UnfoldResult foldResult){
+        if (!cnmining.verificaVincoliPositivi(grafoPG0, null, null, vincoli.positivi, foldResult.map)) {
+	    	   System.out.println("Fallimento\nIl grafo PG0 non soddisfa i vincoli positivi!");
+	    	   System.exit(0);
+	       }
+        }
+        
 	public static Object[] startCNMining(UIPluginContext context, XLog log, Settings settings, boolean uiMode) throws Exception
 	{
 		ConstraintsManager vincoli = new ConstraintsManager();
@@ -322,10 +329,11 @@ public class CNMining
        
 	       System.out.println();
 	       
-	       if (!cnmining.verificaVincoliPositivi(grafoPG0, null, null, vincoli.positivi, foldResult.map)) {
-	    	   System.out.println("Fallimento\nIl grafo PG0 non soddisfa i vincoli positivi!");
-	    	   System.exit(0);
-	       }
+               
+               verificaVincoliPositivi(cnmining, grafoPG0, vincoli, foldResult);
+               
+               
+	       
 	  	}
                 
                 progress(uiMode, context, 30);
@@ -386,7 +394,6 @@ public class CNMining
 	    System.out.println("Rimozione degli archi rimuovibili...");
      
 	    causalScoreMatrixResidua = cnmining.calcoloMatriceDeiCausalScore(log, foldResult.map, foldResult.traccia_attivita, settings.fallFactor);
-      
 	    for (;;)
 	    {
 	    	ObjectArrayList<Edge> removableEdges = cnmining.removableEdges(
@@ -3005,4 +3012,5 @@ public class CNMining
 		}
 	}
 }
+
 
