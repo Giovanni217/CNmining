@@ -106,12 +106,148 @@ public class CNMining
 	    return startCNMining(context, log, settings, true);
 	}
 	
+        public static void progress(boolean uiMode, UIPluginContext context, int value){
+            if(uiMode)
+                    context.getProgress().setValue(value);
+        }
+        
+        public static double[][] setMatrix(Settings settings, double[][] Matrix, UnfoldResult unfoldResult){
+            if (settings.sigmaLogNoise > 0.0D)
+		{
+			for (int i = 0; i < Matrix.length; i++)
+			{
+				for (int j = 0; j < Matrix.length; j++)
+				{
+					if (Matrix[i][j] <= settings.sigmaLogNoise * unfoldResult.traccia_attivita.size())
+					{
+						Matrix[i][j] = 0.0D; 
+					}
+				}
+			}
+		}
+            return Matrix;
+        }
+        
+        public static Node setNode(Graph grafoUnfolded){
+                        Node n = null;
+            for (int ni = 0; ni < grafoUnfolded.listaNodi().size(); ni++) {
+	  		n = (Node)grafoUnfolded.listaNodi().get(ni);
+	  		n.setMark(false);
+	  	}
+            return n;
+        }
+        
+        public static Edge setEdge(Graph grafoFolded, ConstraintsManager vincoli){
+            Edge e = null;
+            Constraint c = null;
+            for (int jj = 0; jj < grafoFolded.getLista_archi().size(); jj++)
+  		{
+  			e = (Edge)grafoFolded.getLista_archi().get(jj);
+       
+  			for (int kk = 0; kk < vincoli.positivi.size(); kk++) {
+  				c = (Constraint)vincoli.positivi.get(kk);
+  				if ((c.getBodyList().contains(e.getX().getNomeAttivita())) && (c.getHeadList().contains(e.getY().getNomeAttivita())))
+  				{ 
+  					e.setFlag(true);
+  					System.out.println(e + " OK!!!!!!");
+  					break;
+  				}
+  				System.out.println("NOT OK!!!!!!!");
+  			}
+  		}
+            return e;
+        }
+        
+        public static Edge findBestRemovable(ObjectArrayList<Edge> removableEdges, double[][] causalScoreMatrixResidua){
+            
+                Edge e = null;
+                Edge bestRemovable = null;
+	       double worst_causal_score = Double.MAX_VALUE;
+            for (int jj = 0; jj < removableEdges.size(); jj++)
+	       {
+	    	   e = (Edge)removableEdges.get(jj);
+         
+	    	   double e_cs = causalScoreMatrixResidua[e.getX().getID_attivita()][e.getY().getID_attivita()];
+         
+	    	   if (e_cs < worst_causal_score) {
+	    		   worst_causal_score = e_cs;
+	    		   bestRemovable = e;
+	    	   }
+	       }
+            return bestRemovable;
+        }
+        
+        public static IntOpenHashSet setTksY(ObjectIntOpenHashMap<IntOpenHashSet> obX, Edge bestRemovable, Object[] keys){
+            IntOpenHashSet tks = null;
+        for (int ts = 0; ts < obX.allocated.length; ts++) {
+	    		   if (obX.allocated[ts] != false) {
+	    			   tks = (IntOpenHashSet)keys[ts];
+	    			   tks.remove(bestRemovable.getY().getID_attivita());
+	    		   }
+	    	   }
+        
+        return tks;
+        }
+        
+        
+        
+        public static IntOpenHashSet setTksX(ObjectIntOpenHashMap<IntOpenHashSet> obY, Edge bestRemovable, Object[] keys){
+        IntOpenHashSet tks = null;
+        for (int ts = 0; ts < obY.allocated.length; ts++) {
+	    		   if (obY.allocated[ts] != false) {
+	    			   tks = (IntOpenHashSet)keys[ts];
+	    			   tks.remove(bestRemovable.getX().getID_attivita());
+	    		   }
+	    	   }
+        
+        return tks;
+        }
+        
+        public static IntArrayList setArrayTksY(ObjectIntOpenHashMap<IntOpenHashSet> extendedObX, Edge bestRemovable, Object[] keys){
+                IntArrayList tks = null;
+	    	   for (int ts = 0; ts < extendedObX.allocated.length; ts++) {
+	    		   if (extendedObX.allocated[ts] != false) {
+	    			   tks = (IntArrayList)keys[ts];
+	    			   tks.removeAllOccurrences(bestRemovable.getY().getID_attivita());
+	    		   }
+	    	   }
+                   return tks;
+        }
+        
+        public static IntArrayList setArrayTksX(ObjectIntOpenHashMap<IntOpenHashSet> extendedObY, Edge bestRemovable, Object[] keys){
+                IntArrayList tks = null;
+	    	   for (int ts = 0; ts < extendedObY.allocated.length; ts++) {
+	    		   if (extendedObY.allocated[ts] != false) {
+	    			   tks = (IntArrayList)keys[ts];
+	    			   tks.removeAllOccurrences(bestRemovable.getX().getID_attivita());
+	    		   }
+	    	   }
+                   return tks;
+        }
+        
+        public static void findRemovableNodes(Graph grafoFolded, ObjectArrayList<Node> removableNodes){
+            Node n = null;
+            for (int jj = 0; jj < grafoFolded.listaNodi().size(); jj++) {
+    		n = (Node)grafoFolded.listaNodi().get(jj);
+    		if ((n.getInner_degree() == 0) && (n.getOuter_degree() == 0)) {
+    			removableNodes.add(n);
+    		}
+    	}
+        }
+        
+        public static void removeNodes(ObjectArrayList<Node> removableNodes, Graph grafoFolded){
+            Node removableNode = null;
+            for (int jj = 0; jj < removableNodes.size(); jj++) {
+    		removableNode = (Node)removableNodes.get(jj);
+    		grafoFolded.removeNode(removableNode);
+    	}
+        }
+        
 	public static Object[] startCNMining(UIPluginContext context, XLog log, Settings settings, boolean uiMode) throws Exception
 	{
 		ConstraintsManager vincoli = new ConstraintsManager();
 		
-		if(uiMode)
-			context.getProgress().setValue(1);
+		progress(uiMode, context, 1);
 		
 		System.out.println("\nCNMining\n\nSettings:");
 	    System.out.println("Sigma log noise: " + settings.sigmaLogNoise);
@@ -132,8 +268,7 @@ public class CNMining
 				vincoli.negatiUnfolded, vincoli.forbiddenUnfolded, unfoldResult.map
 			);
 		}
-		if(uiMode)
-			context.getProgress().setValue(10);
+                progress(uiMode, context, 10);
      
 		System.out.println("Causal Score Matrix...");
      
@@ -143,20 +278,8 @@ public class CNMining
 
 		double[][] bestNextMatrix = cnmining.buildBestNextMatrix(log, unfoldResult.map, unfoldResult.traccia_attivita, causalScoreMatrix, vincoli.forbiddenUnfolded);
      
-		if (settings.sigmaLogNoise > 0.0D)
-		{
-			for (int i = 0; i < bestNextMatrix.length; i++)
-			{
-				for (int j = 0; j < bestNextMatrix.length; j++)
-				{
-					if (bestNextMatrix[i][j] <= settings.sigmaLogNoise * unfoldResult.traccia_attivita.size())
-					{
-						bestNextMatrix[i][j] = 0.0D; 
-					}
-				}
-			}
-		}
-
+                bestNextMatrix = setMatrix(settings, bestNextMatrix, unfoldResult);
+                   
 		Object[] keys = unfoldResult.map.keys;
 		
 		System.out.println("Costruzione del grafo unfolded originale...");
@@ -204,16 +327,8 @@ public class CNMining
 	    	   System.exit(0);
 	       }
 	  	}
-     
-	  	if(uiMode)
-	  		context.getProgress().setValue(30);
-	  	
-	  	/*
-	  	ObjectArrayList<FakeDependency> attivitaParallele = cnmining.getAttivitaParallele(
-	  		bestNextMatrix, grafoUnfolded, unfoldResult.map, vincoli.positivi, 
-	  		foldResult.map, grafoFoldedOriginale
-		);
-		*/
+                
+                progress(uiMode, context, 30);
 	  	
 	  	System.out.println("Esecuzione algortimo 2... ");
   
@@ -231,40 +346,20 @@ public class CNMining
 			foldResult.traccia_attivita
 	  	);
      
- 
-	  	for (int ni = 0; ni < grafoUnfolded.listaNodi().size(); ni++) {
-	  		Node n = (Node)grafoUnfolded.listaNodi().get(ni);
-	  		n.setMark(false);
-	  	}
-     
-	  	/*
-	  	ObjectArrayList<FakeDependency> attivitaParalleleResidue = cnmining.getAttivitaParallele(
-	  		bestNextMatrix, grafoUnfolded, unfoldResult.map, 
-	  		vincoli.positivi, foldResult.map, grafoFolded
-	  	);
-	  	*/
-     
-	  	// Verifica sul folding
-  		for (int jj = 0; jj < grafoFolded.getLista_archi().size(); jj++)
-  		{
-  			Edge e = (Edge)grafoFolded.getLista_archi().get(jj);
-       
-  			for (int kk = 0; kk < vincoli.positivi.size(); kk++) {
-  				Constraint c = (Constraint)vincoli.positivi.get(kk);
-  				if ((c.getBodyList().contains(e.getX().getNomeAttivita())) && (c.getHeadList().contains(e.getY().getNomeAttivita())))
-  				{ 
-  					e.setFlag(true);
-  					System.out.println(e + " OK!!!!!!");
-  					break;
-  				}
-  				System.out.println("NOT OK!!!!!!!");
-  			}
-  		}
+                        Node n = null;
+                        n =setNode(grafoUnfolded);
+                        
+	  	
+   
+                        
+                        Edge e = null;
+                        e = setEdge(grafoFolded, vincoli);
+                        
+  		
   		
   		double[][] causalScoreMatrixResidua = cnmining.calcoloMatriceDeiCausalScore(log, foldResult.map, foldResult.traccia_attivita, settings.fallFactor);
-     
-  		if(uiMode)
-  			context.getProgress().setValue(55);
+
+                progress(uiMode, context, 55);
      
 	    System.out.println("PostProcessing: rimozione dipendenze indirette... ");
      
@@ -302,23 +397,11 @@ public class CNMining
 	    	   break;
 	       }
 	       Edge bestRemovable = null;
-       
-	       double worst_causal_score = Double.MAX_VALUE;
-	       
-	       for (int jj = 0; jj < removableEdges.size(); jj++)
-	       {
-	    	   Edge e = (Edge)removableEdges.get(jj);
-         
-	    	   double e_cs = causalScoreMatrixResidua[e.getX().getID_attivita()][e.getY().getID_attivita()];
-         
-	    	   if (e_cs < worst_causal_score) {
-	    		   worst_causal_score = e_cs;
-	    		   bestRemovable = e;
-	    	   }
-	       }
-       
+               
+               bestRemovable = findBestRemovable(removableEdges, causalScoreMatrixResidua);
+               
 	       grafoFolded.removeEdge(bestRemovable.getX(), bestRemovable.getY());
-       
+               
 	       if (!cnmining.verificaVincoliPositivi(grafoFolded, null, null, vincoli.positivi, foldResult.map)) {
 	    	   grafoFolded.addEdge(bestRemovable.getX(), bestRemovable.getY(), true);
 	       }
@@ -333,54 +416,38 @@ public class CNMining
          
 	    	   keys = obX.keys;
          
-	    	   for (int ts = 0; ts < obX.allocated.length; ts++) {
-	    		   if (obX.allocated[ts] != false) {
-	    			   IntOpenHashSet tks = (IntOpenHashSet)keys[ts];
-	    			   tks.remove(bestRemovable.getY().getID_attivita());
-	    		   }
-	    	   }
+                   IntOpenHashSet tks = null;
+                   tks = setTksY(obX, bestRemovable, keys);
+                   
 	    	   keys = ibY.keys;
          
-	    	   for (int ts = 0; ts < ibY.allocated.length; ts++) {
-	    		   if (ibY.allocated[ts] != false) {
-	    			   IntOpenHashSet tks = (IntOpenHashSet)keys[ts];
-	    			   tks.remove(bestRemovable.getX().getID_attivita());
-	    		   }
-	    	   }	    	   
+                   tks = setTksX(ibY, bestRemovable, keys);
+                   
+	    	   	    	   
  
 	    	   ObjectIntOpenHashMap<IntArrayList> extendedObX = bestRemovable.getX().getExtendedOutput();         
 	    	   ObjectIntOpenHashMap<IntArrayList> extendedIbY = bestRemovable.getY().getExtendedInput();
          
 	    	   keys = extendedObX.keys;
          
-	    	   for (int ts = 0; ts < extendedObX.allocated.length; ts++) {
-	    		   if (extendedObX.allocated[ts] != false) {
-	    			   IntArrayList tks = (IntArrayList)keys[ts];
-	    			   tks.removeAllOccurrences(bestRemovable.getY().getID_attivita());
-	    		   }
-	    	   }
+                  
+                   IntArrayList arrayTks = null;
+                   arrayTks = setArrayTksY(extendedObX, bestRemovable, keys);
+                   
+                   
 	    	   keys = extendedIbY.keys;
-         
-	    	   for (int ts = 0; ts < extendedIbY.allocated.length; ts++)
-	    		   if (extendedIbY.allocated[ts] != false) {
-	    			   IntArrayList tks = (IntArrayList)keys[ts];
-	    			   tks.removeAllOccurrences(bestRemovable.getX().getID_attivita());
-	    		   }
+                   
+                   arrayTks = setArrayTksX(extendedIbY, bestRemovable, keys);
+                   
 	    	   removableEdges.removeFirstOccurrence(bestRemovable);
        		}
 	    }
      
 	    ObjectArrayList<Node> removableNodes = new ObjectArrayList<Node>();
-    	for (int jj = 0; jj < grafoFolded.listaNodi().size(); jj++) {
-    		Node n = (Node)grafoFolded.listaNodi().get(jj);
-    		if ((n.getInner_degree() == 0) && (n.getOuter_degree() == 0)) {
-    			removableNodes.add(n);
-    		}
-    	}
-    	for (int jj = 0; jj < removableNodes.size(); jj++) {
-    		Node removableNode = (Node)removableNodes.get(jj);
-    		grafoFolded.removeNode(removableNode);
-    	}
+            
+            findRemovableNodes(grafoFolded, removableNodes);
+            
+            removeNodes(removableNodes, grafoFolded);
     	
     	System.out.println("Rappresenzatione grafica...");
  
@@ -390,7 +457,8 @@ public class CNMining
     	Flex flexDiagram = diagram.flex();
  
     	System.out.println();
-    	
+        
+        	
     	if(uiMode){
         	context.getProgress().setValue(85);     
         	context.getProgress().setValue(100);
@@ -411,6 +479,7 @@ public class CNMining
     	}	
 
     	return new Object[] { flexDiagram, diagram.startTaskNodes, diagram.endTaskNodes, diagram.annotations };
+               
 	}
 	
 	private boolean caricaVincoli(ConstraintsManager vincoli, Settings settings){
@@ -2936,3 +3005,4 @@ public class CNMining
 		}
 	}
 }
+
