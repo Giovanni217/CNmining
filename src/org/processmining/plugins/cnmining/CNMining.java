@@ -1069,6 +1069,24 @@ public class CNMining
 		}
 	}
         
+        public String A2P1C(boolean[] values, int j, Object[] keys, String activity, ObjectIntOpenHashMap<String> map, double[][] csm, String best_unfolded_item, double best_unfolded_cs, Node ny){
+            if (values[j] != false) {
+									String unfolded_item = (String)keys[j];
+                                                                                
+									if (unfolded_item != null)
+									{
+ 
+										if ((unfolded_item.split("#")[0].equals(activity)) && 
+											(csm[map.get(unfolded_item)][ny.getID_attivita()] > best_unfolded_cs)) 
+										{
+											best_unfolded_item = unfolded_item;
+											best_unfolded_cs = csm[map.get(unfolded_item)][ny.getID_attivita()];
+										} 
+									}
+								}
+            return best_unfolded_item;
+        }
+        
         public String A2P1(ObjectOpenHashSet<String> lista_candidati_best_pred, double[][] csm, Node ny, ObjectIntOpenHashMap<String> map, String best_pred, Graph graph, ObjectArrayList<Constraint> vincoli_negati, ObjectArrayList<Forbidden> lista_forbidden, Graph folded_g, ObjectIntOpenHashMap<String> folded_map){
             if (lista_candidati_best_pred != null)
 			{
@@ -1087,20 +1105,8 @@ public class CNMining
 							boolean[] values = map.allocated;
                
 							for (int j = 0; j < values.length; j++) {
-								if (values[j] != false) {
-									String unfolded_item = (String)keys[j];
-                   
-									if (unfolded_item != null)
-									{
- 
-										if ((unfolded_item.split("#")[0].equals(activity)) && 
-											(csm[map.get(unfolded_item)][ny.getID_attivita()] > best_unfolded_cs)) 
-										{
-											best_unfolded_item = unfolded_item;
-											best_unfolded_cs = csm[map.get(unfolded_item)][ny.getID_attivita()];
-										} 
-									}
-								}
+                                                            best_unfolded_item = A2P1C(values, j, keys, activity, map, csm, best_unfolded_item, best_unfolded_cs, ny);
+								
 							}
 							lista_candidati_best_pred_unfolded.add(best_unfolded_item);
 						}
@@ -1119,7 +1125,23 @@ public class CNMining
             return best_pred;
         }
 	
-        public String A2P2(ObjectOpenHashSet<String> lista_candidati_best_succ, ObjectIntOpenHashMap<String> map, Node nx, String best_succ, Graph graph, ObjectArrayList<Constraint> vincoli_negati, ObjectArrayList<Forbidden> lista_forbidden, Graph folded_g, ObjectIntOpenHashMap<String> folded_map){
+        public String A2P2C(boolean[] states, int j, Object[] keys, String activity, ObjectIntOpenHashMap<String> map, double[][] csm, String best_unfolded_item, double best_unfolded_cs, Node nx){
+            if (states[j] != false) {
+								String unfolded_item = (String)keys[j];
+								if (unfolded_item != null)
+								{
+									if ((unfolded_item.split("#")[0].equals(activity)) && 
+										(csm[nx.getID_attivita()][map.get(unfolded_item)] > best_unfolded_cs)) 
+									{
+										best_unfolded_item = unfolded_item;
+										best_unfolded_cs = csm[nx.getID_attivita()][map.get(unfolded_item)];
+									} 
+								}
+							}
+            return best_unfolded_item;
+        }
+        
+        public String A2P2(ObjectOpenHashSet<String> lista_candidati_best_succ, ObjectIntOpenHashMap<String> map, double[][] csm, Node nx, String best_succ, Graph graph, ObjectArrayList<Constraint> vincoli_negati, ObjectArrayList<Forbidden> lista_forbidden, Graph folded_g, ObjectIntOpenHashMap<String> folded_map){
             if (lista_candidati_best_succ != null) {
             if (lista_candidati_best_succ.size() > 0)
 				{
@@ -1138,18 +1160,8 @@ public class CNMining
 						Object[] keys = map.keys;
 						for (int j = 0; j < states.length; j++)
 						{
-							if (states[j] != false) {
-								String unfolded_item = (String)keys[j];
-								if (unfolded_item != null)
-								{
-									if ((unfolded_item.split("#")[0].equals(activity)) && 
-										(csm[nx.getID_attivita()][map.get(unfolded_item)] > best_unfolded_cs)) 
-									{
-										best_unfolded_item = unfolded_item;
-										best_unfolded_cs = csm[nx.getID_attivita()][map.get(unfolded_item)];
-									} 
-								}
-							}
+                                                    best_unfolded_item = A2P2C(states, j, keys, activity, map, csm, best_unfolded_item, best_unfolded_cs, nx);
+							
 						}
 						if (best_unfolded_item.equals("")) {
 							System.out.println(activity);
@@ -1170,7 +1182,21 @@ public class CNMining
             }
             return best_succ;
         }
-        
+        public String A2P3C(boolean[] states, int j, Object[] keys, String activity, ObjectIntOpenHashMap<String> map, double[][] csm, String best_unfolded_item, double best_unfolded_cs, Node nx){
+            if (states[j] != false) {
+										String unfolded_item = (String)keys[j];
+										if (unfolded_item != null)
+										{
+											if ((unfolded_item.split("#")[0].equals(activity)) && 
+												(csm[map.get(unfolded_item)][nx.getID_attivita()] > best_unfolded_cs)) 
+											{
+												best_unfolded_item = unfolded_item;
+												best_unfolded_cs = csm[map.get(unfolded_item)][nx.getID_attivita()];
+											} 
+										}
+									}
+            return best_unfolded_item;
+        }
         public String A2P3(String best_pred_yx, ObjectOpenHashSet<String> lista_candidati_best_pred_yx, ObjectIntOpenHashMap<String> map, double [][] csm, Node nx, Graph graph, ObjectArrayList<Constraint> vincoli_negati, ObjectArrayList<Forbidden> lista_forbidden, Graph folded_g, ObjectIntOpenHashMap<String> folded_map){
         if (lista_candidati_best_pred_yx != null)
 					{
@@ -1189,18 +1215,8 @@ public class CNMining
 								Object[] keys = map.keys;
 								
 								for (int j = 0; j < states.length; j++) {
-									if (states[j] != false) {
-										String unfolded_item = (String)keys[j];
-										if (unfolded_item != null)
-										{
-											if ((unfolded_item.split("#")[0].equals(activity)) && 
-												(csm[map.get(unfolded_item)][nx.getID_attivita()] > best_unfolded_cs)) 
-											{
-												best_unfolded_item = unfolded_item;
-												best_unfolded_cs = csm[map.get(unfolded_item)][nx.getID_attivita()];
-											} 
-										}
-									}
+                                                                  best_unfolded_item = A2P3C(states, j, keys, activity, map, csm, best_unfolded_item, best_unfolded_cs, nx);								
+                                                                    
 								}
 								if (!best_unfolded_item.equals("")) {
 									lista_candidati_best_pred_unfolded.add(best_unfolded_item);
@@ -1217,6 +1233,25 @@ public class CNMining
                                         }
          return best_pred_yx;
         }
+        
+        public String A2P2C(boolean[] states, int j, Object[] keys, String activity, ObjectIntOpenHashMap<String> map, double[][] csm, String best_unfolded_item, double best_unfolded_cs, Node ny){
+            if (states[j] != false) {
+										String unfolded_item = (String)keys[j];
+                     
+										if (unfolded_item != null)
+										{
+ 
+											if ((unfolded_item.split("#")[0].equals(activity)) && 
+												(csm[ny.getID_attivita()][map.get(unfolded_item)] > best_unfolded_cs)) 
+											{
+												best_unfolded_item = unfolded_item;
+												best_unfolded_cs = csm[ny.getID_attivita()][map.get(unfolded_item)];
+											} 
+										}
+									}
+            return best_unfolded_item;
+        }								
+
         
         public String A2P4(ObjectOpenHashSet<String> lista_candidati_best_succ_yx, String best_succ_yx, ObjectOpenHashSet<String> lista_candidati_best_succ, ObjectIntOpenHashMap<String> map, double [][] csm, Node ny, Graph graph, ObjectArrayList<Constraint> vincoli_negati, ObjectArrayList<Forbidden> lista_forbidden, Graph folded_g, ObjectIntOpenHashMap<String> folded_map){
             if (lista_candidati_best_succ_yx != null) {
@@ -1237,20 +1272,8 @@ public class CNMining
                  
 								for (int j = 0; j < states.length; j++)
 								{
-									if (states[j] != false) {
-										String unfolded_item = (String)keys[j];
-                     
-										if (unfolded_item != null)
-										{
- 
-											if ((unfolded_item.split("#")[0].equals(activity)) && 
-												(csm[ny.getID_attivita()][map.get(unfolded_item)] > best_unfolded_cs)) 
-											{
-												best_unfolded_item = unfolded_item;
-												best_unfolded_cs = csm[ny.getID_attivita()][map.get(unfolded_item)];
-											} 
-										}
-									}
+                                                                    A2P2C(states, j,  keys, activity, map, csm, best_unfolded_item, best_unfolded_cs, ny);									
+                                                                    
 								}
 								if (!best_unfolded_item.equals("")) {
 									lista_candidati_best_succ_unfolded.add(best_unfolded_item);
@@ -1407,7 +1430,7 @@ public class CNMining
  
 			
                             
-                            best_succ = A2P2(lista_candidati_best_succ, map, nx, best_succ, graph, vincoli_negati, lista_forbidden, folded_g, folded_map);
+                            best_succ = A2P2(lista_candidati_best_succ, map, csm, nx, best_succ, graph, vincoli_negati, lista_forbidden, folded_g, folded_map);
 				
                             A2P1_1(best_pred, graph, m, ny, map);
 			
@@ -3122,4 +3145,5 @@ public class CNMining
 		}
 	}
 }
+
 
