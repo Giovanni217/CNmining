@@ -2958,7 +2958,7 @@ public class CNMining
 		return predecessors_traccia;
 	}   
         
-        public static void rEP1(ObjectIntOpenHashMap<IntOpenHashSet> obX, ObjectIntOpenHashMap<IntOpenHashSet> ibY, Object[] keys, Edge e){
+        public static void rEP1(ObjectIntOpenHashMap<IntOpenHashSet> obX, Object[] keys, Edge e){
             for (int i = 0; i < obX.allocated.length; i++) {
 					if (obX.allocated[i] != false) {
 						IntOpenHashSet ts = (IntOpenHashSet)keys[i];
@@ -2966,8 +2966,12 @@ public class CNMining
 							break;
 					}
 				}
-				keys = ibY.keys;
-				for (int i = 0; i < ibY.allocated.length; i++) {
+				
+				
+        }
+        
+        public static void rEP2(ObjectIntOpenHashMap<IntOpenHashSet> ibY, Object[] keys, Edge e){
+            for (int i = 0; i < ibY.allocated.length; i++) {
 					if (ibY.allocated[i] != false) {
 						IntOpenHashSet ts = (IntOpenHashSet)keys[i];
 						if ((ts.contains(e.getX().getID_attivita())) && (ts.size() == 1)) {
@@ -2993,8 +2997,9 @@ public class CNMining
          
 				ObjectIntOpenHashMap<IntOpenHashSet> ibY = e.getY().getInput();
 				Object[] keys = obX.keys;
-                                rEP1(obX, ibY, keys, e);
-				
+                                rEP1(obX, keys, e);
+                                keys = ibY.keys;
+				rEP2(ibY, keys, e);
 				removableEdges.add(e);
 			}
 		}
@@ -3191,12 +3196,17 @@ public class CNMining
 			}
             return vincolo_soddisfatto;
         }
+        
+        public static void vVPRE(Node np, Node nr, Graph graph){
+            if ((np != null) && (nr != null)) {
+			graph.removeEdge(np, nr);
+		}
+        }
  
 	public boolean verificaVincoliPositivi(Graph graph, Node np, Node nr, ObjectArrayList<Constraint> vincoli_positivi, ObjectIntOpenHashMap<String> map)
 	{
-		if ((np != null) && (nr != null)) {
-			graph.removeEdge(np, nr);
-		}
+                vVPRE(np, nr, graph);
+		
 		for (ObjectCursor<Constraint> cc : vincoli_positivi)
 		{
 			Constraint c = (Constraint)cc.value;
@@ -3208,6 +3218,7 @@ public class CNMining
 			Iterator localIterator2 = c.getHeadList().iterator();
                         vincolo_soddisfatto = vVPP1(localIterator2, localIterator3, graph, map, vincolo_soddisfatto);
 			
+                        
 			if (!vincolo_soddisfatto)
 			{
 				if ((np != null) && (nr != null))
