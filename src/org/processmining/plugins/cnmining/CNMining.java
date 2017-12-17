@@ -2289,36 +2289,19 @@ public class CNMining
 			it++;
 		}
 	}
-	
-	private boolean esisteAttivatore(String trace, String activity_x, String activity_y, ObjectObjectOpenHashMap<String, ObjectArrayList<String>> traccia_attivita, ObjectOpenHashSet<String> candidati_z, boolean flag, boolean autoanello_y, boolean forward)
-	{
-		ObjectArrayList<String> attivatore_traccia = new ObjectArrayList<String>();
-     
-		int iter;
-		if (!forward) {
+        
+        public int eAP0(boolean forward, ObjectObjectOpenHashMap<String, ObjectArrayList<String>> traccia_attivita, String trace, int iter){
+            if (!forward) {
 			iter = ((ObjectArrayList)traccia_attivita.get(trace)).size() - 1;
 		}
 		else {
 			iter = 0;
 		}
-		
-		boolean trovata_y = false;
-     
-		while (((iter >= 0) && (!forward)) || ((iter < ((ObjectArrayList)traccia_attivita.get(trace)).size()) && (forward)))
-		{
-			String activity_z = (String)((ObjectArrayList)traccia_attivita.get(trace)).get(iter);
-       
-			if ((!trovata_y) && (!activity_z.equals(activity_y)))
-			{
-				if (!forward) {
-					iter--;
-				} else {
-	  	        iter++;
-				}
-			}
-			else
-			{
-				if (!trovata_y)
+            return iter;
+        }
+        
+        public String eAP1(String activity_z, boolean trovata_y, boolean forward, int iter, ObjectObjectOpenHashMap<String, ObjectArrayList<String>> traccia_attivita, String trace){
+            if (!trovata_y)
 				{
 					trovata_y = true;
 					if (!forward) {
@@ -2329,9 +2312,11 @@ public class CNMining
 						activity_z = (String)((ObjectArrayList)traccia_attivita.get(trace)).get(iter);
 					}
 				}
-				if (flag)
-				{
-					if (!activity_z.equals(activity_x))
+            return activity_z;
+        }
+        
+        public boolean eAP2(String activity_z, String activity_x, String activity_y, ObjectArrayList<String> attivatore_traccia, ObjectOpenHashSet<String> candidati_z, boolean trovata_y){
+            if (!activity_z.equals(activity_x))
 					{
 						if (!attivatore_traccia.contains(activity_z)) {
 							attivatore_traccia.add(activity_z);
@@ -2350,25 +2335,70 @@ public class CNMining
 						trovata_y = false;
 						attivatore_traccia = new ObjectArrayList<String>();
 					}
-				}
-				else if (!activity_z.equals(activity_y))
+            return true;
+        }
+        
+        public boolean eAP3(String activity_z, String activity_y, ObjectArrayList<String> attivatore_traccia, ObjectOpenHashSet<String> candidati_z, boolean autoanello_y){
+            if (!activity_z.equals(activity_y))
 				{
 					if (!attivatore_traccia.contains(activity_z)) {
 						attivatore_traccia.add(activity_z);
 					}
-				}
-				else {
+				}else {
 					attivatore_traccia.retainAll(candidati_z);
            
 					if ((attivatore_traccia.size() == 0) && (!autoanello_y)) {
 						return false;
 					}   
 					attivatore_traccia = new ObjectArrayList<String>();
-				}        
-				if (!forward) {
+				} 
+            return true;
+        }
+        
+        public int setIter(boolean forward, int iter){
+           if (!forward) {
 					iter--;
-				} else
-					iter++;
+				} else {
+	  	        iter++;
+				}
+            return iter; 
+        }
+	
+	private boolean esisteAttivatore(String trace, String activity_x, String activity_y, ObjectObjectOpenHashMap<String, ObjectArrayList<String>> traccia_attivita, ObjectOpenHashSet<String> candidati_z, boolean flag, boolean autoanello_y, boolean forward)
+	{
+		ObjectArrayList<String> attivatore_traccia = new ObjectArrayList<String>();
+     
+		int iter = 0;
+                iter = eAP0(forward, traccia_attivita, trace, iter);
+		
+		
+		boolean trovata_y = false;
+     
+		while (((iter >= 0) && (!forward)) || ((iter < ((ObjectArrayList)traccia_attivita.get(trace)).size()) && (forward)))
+		{
+			String activity_z = (String)((ObjectArrayList)traccia_attivita.get(trace)).get(iter);
+                        
+                        
+			if ((!trovata_y) && (!activity_z.equals(activity_y)))
+			{
+                            iter = setIter(forward, iter);
+				
+			}
+			else
+			{
+                            activity_z = eAP1(activity_z, trovata_y, forward, iter, traccia_attivita, trace);
+				
+				if (flag)
+				{
+                                    if(!eAP2(activity_z, activity_x, activity_y, attivatore_traccia, candidati_z, trovata_y)) return false;
+					
+				}
+				else 
+                                    if(!eAP3(activity_z, activity_y, attivatore_traccia, candidati_z, autoanello_y)) return false;
+                                    
+                                
+				    
+				iter = setIter(forward, iter);
 			}
 		}
 		if (!flag)
