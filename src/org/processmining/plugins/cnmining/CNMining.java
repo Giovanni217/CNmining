@@ -2363,23 +2363,9 @@ public class CNMining
 				}
             return iter; 
         }
-	
-	private boolean esisteAttivatore(String trace, String activity_x, String activity_y, ObjectObjectOpenHashMap<String, ObjectArrayList<String>> traccia_attivita, ObjectOpenHashSet<String> candidati_z, boolean flag, boolean autoanello_y, boolean forward)
-	{
-		ObjectArrayList<String> attivatore_traccia = new ObjectArrayList<String>();
-     
-		int iter = 0;
-                iter = eAP0(forward, traccia_attivita, trace, iter);
-		
-		
-		boolean trovata_y = false;
-     
-		while (((iter >= 0) && (!forward)) || ((iter < ((ObjectArrayList)traccia_attivita.get(trace)).size()) && (forward)))
-		{
-			String activity_z = (String)((ObjectArrayList)traccia_attivita.get(trace)).get(iter);
-                        
-                        
-			if ((!trovata_y) && (!activity_z.equals(activity_y)))
+        
+        public boolean eAPC(boolean trovata_y, boolean flag, String trace, int iter, String activity_x, String activity_z, String activity_y, ObjectArrayList<String> attivatore_traccia, ObjectObjectOpenHashMap<String, ObjectArrayList<String>> traccia_attivita, ObjectOpenHashSet<String> candidati_z, boolean autoanello_y, boolean forward){
+            if ((!trovata_y) && (!activity_z.equals(activity_y)))
 			{
                             iter = setIter(forward, iter);
 				
@@ -2400,6 +2386,25 @@ public class CNMining
 				    
 				iter = setIter(forward, iter);
 			}
+            return true;
+        }
+	
+	private boolean esisteAttivatore(String trace, String activity_x, String activity_y, ObjectObjectOpenHashMap<String, ObjectArrayList<String>> traccia_attivita, ObjectOpenHashSet<String> candidati_z, boolean flag, boolean autoanello_y, boolean forward)
+	{
+		ObjectArrayList<String> attivatore_traccia = new ObjectArrayList<String>();
+     
+		int iter = 0;
+                iter = eAP0(forward, traccia_attivita, trace, iter);
+		
+		
+		boolean trovata_y = false;
+     
+		while (((iter >= 0) && (!forward)) || ((iter < ((ObjectArrayList)traccia_attivita.get(trace)).size()) && (forward)))
+		{
+			String activity_z = (String)((ObjectArrayList)traccia_attivita.get(trace)).get(iter);
+                        
+                        if(!eAPC(trace, iter, activity_x, activity_z, activity_y, attivatore_traccia, traccia_attivita, candidati_z, autoanello_y, forward)) return false;
+			
 		}
 		if (!flag)
 		{
