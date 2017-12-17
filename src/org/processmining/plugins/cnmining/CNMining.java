@@ -128,8 +128,7 @@ public class CNMining
             return Matrix;
         }
         
-        public static Node setNode(Graph grafoUnfolded){
-                        Node n = null;
+        public static Node setNode(Node n, Graph grafoUnfolded){
             for (int ni = 0; ni < grafoUnfolded.listaNodi().size(); ni++) {
 	  		n = (Node)grafoUnfolded.listaNodi().get(ni);
 	  		n.setMark(false);
@@ -137,9 +136,8 @@ public class CNMining
             return n;
         }
         
-        public static Edge setEdge(Graph grafoFolded, ConstraintsManager vincoli){
-            Edge e = null;
-            Constraint c = null;
+        public static Edge setEdge(Edge e, Constraint c, Graph grafoFolded, ConstraintsManager vincoli){
+            
             for (int jj = 0; jj < grafoFolded.getLista_archi().size(); jj++)
   		{
   			e = (Edge)grafoFolded.getLista_archi().get(jj);
@@ -158,10 +156,9 @@ public class CNMining
             return e;
         }
         
-        public static Edge findBestRemovable(ObjectArrayList<Edge> removableEdges, double[][] causalScoreMatrixResidua){
+        public static Edge findBestRemovable(Edge e, Edge bestRemovable, ObjectArrayList<Edge> removableEdges, double[][] causalScoreMatrixResidua){
             
-                Edge e = null;
-                Edge bestRemovable = null;
+                
 	       double worst_causal_score = Double.MAX_VALUE;
             for (int jj = 0; jj < removableEdges.size(); jj++)
 	       {
@@ -177,8 +174,8 @@ public class CNMining
             return bestRemovable;
         }
         
-        public static IntOpenHashSet setTksY(ObjectIntOpenHashMap<IntOpenHashSet> obX, Edge bestRemovable, Object[] keys){
-            IntOpenHashSet tks = null;
+        public static IntOpenHashSet setTksY(IntOpenHashSet tks, ObjectIntOpenHashMap<IntOpenHashSet> obX, Edge bestRemovable, Object[] keys){
+         
         for (int ts = 0; ts < obX.allocated.length; ts++) {
 	    		   if (obX.allocated[ts] != false) {
 	    			   tks = (IntOpenHashSet)keys[ts];
@@ -191,8 +188,8 @@ public class CNMining
         
         
         
-        public static IntOpenHashSet setTksX(ObjectIntOpenHashMap<IntOpenHashSet> obY, Edge bestRemovable, Object[] keys){
-        IntOpenHashSet tks = null;
+        public static IntOpenHashSet setTksX(IntOpenHashSet tks, ObjectIntOpenHashMap<IntOpenHashSet> obY, Edge bestRemovable, Object[] keys){
+        
         for (int ts = 0; ts < obY.allocated.length; ts++) {
 	    		   if (obY.allocated[ts] != false) {
 	    			   tks = (IntOpenHashSet)keys[ts];
@@ -203,8 +200,8 @@ public class CNMining
         return tks;
         }
         
-        public static IntArrayList setArrayTksY(ObjectIntOpenHashMap<IntOpenHashSet> extendedObX, Edge bestRemovable, Object[] keys){
-                IntArrayList tks = null;
+        public static IntArrayList setArrayTksY(IntArrayList tks, ObjectIntOpenHashMap<IntOpenHashSet> extendedObX, Edge bestRemovable, Object[] keys){
+        
 	    	   for (int ts = 0; ts < extendedObX.allocated.length; ts++) {
 	    		   if (extendedObX.allocated[ts] != false) {
 	    			   tks = (IntArrayList)keys[ts];
@@ -214,8 +211,8 @@ public class CNMining
                    return tks;
         }
         
-        public static IntArrayList setArrayTksX(ObjectIntOpenHashMap<IntOpenHashSet> extendedObY, Edge bestRemovable, Object[] keys){
-                IntArrayList tks = null;
+        public static IntArrayList setArrayTksX(IntArrayList tks, ObjectIntOpenHashMap<IntOpenHashSet> extendedObY, Edge bestRemovable, Object[] keys){
+        
 	    	   for (int ts = 0; ts < extendedObY.allocated.length; ts++) {
 	    		   if (extendedObY.allocated[ts] != false) {
 	    			   tks = (IntArrayList)keys[ts];
@@ -225,8 +222,8 @@ public class CNMining
                    return tks;
         }
         
-        public static void findRemovableNodes(Graph grafoFolded, ObjectArrayList<Node> removableNodes){
-            Node n = null;
+        public static void findRemovableNodes(Node n, Graph grafoFolded, ObjectArrayList<Node> removableNodes){
+         
             for (int jj = 0; jj < grafoFolded.listaNodi().size(); jj++) {
     		n = (Node)grafoFolded.listaNodi().get(jj);
     		if ((n.getInner_degree() == 0) && (n.getOuter_degree() == 0)) {
@@ -235,8 +232,8 @@ public class CNMining
     	}
         }
         
-        public static void removeNodes(ObjectArrayList<Node> removableNodes, Graph grafoFolded){
-            Node removableNode = null;
+        public static void removeNodes(Node removableNode, ObjectArrayList<Node> removableNodes, Graph grafoFolded){
+         
             for (int jj = 0; jj < removableNodes.size(); jj++) {
     		removableNode = (Node)removableNodes.get(jj);
     		grafoFolded.removeNode(removableNode);
@@ -355,13 +352,14 @@ public class CNMining
 	  	);
      
                         Node n = null;
-                        n =setNode(grafoUnfolded);
+                        n =setNode(n, grafoUnfolded);
                         
 	  	
    
                         
                         Edge e = null;
-                        e = setEdge(grafoFolded, vincoli);
+                        Constraint c = null;
+                        e = setEdge(e, c, grafoFolded, vincoli);
                         
   		
   		
@@ -405,7 +403,8 @@ public class CNMining
 	       }
 	       Edge bestRemovable = null;
                
-               bestRemovable = findBestRemovable(removableEdges, causalScoreMatrixResidua);
+               
+               bestRemovable = findBestRemovable(e, bestRemovable, removableEdges, causalScoreMatrixResidua);
                
 	       grafoFolded.removeEdge(bestRemovable.getX(), bestRemovable.getY());
                
@@ -424,11 +423,11 @@ public class CNMining
 	    	   keys = obX.keys;
          
                    IntOpenHashSet tks = null;
-                   tks = setTksY(obX, bestRemovable, keys);
+                   tks = setTksY(tks, obX, bestRemovable, keys);
                    
 	    	   keys = ibY.keys;
          
-                   tks = setTksX(ibY, bestRemovable, keys);
+                   tks = setTksX(tks, ibY, bestRemovable, keys);
                    
 	    	   	    	   
  
@@ -439,12 +438,12 @@ public class CNMining
          
                   
                    IntArrayList arrayTks = null;
-                   arrayTks = setArrayTksY(extendedObX, bestRemovable, keys);
+                   arrayTks = setArrayTksY(arrayTks, extendedObX, bestRemovable, keys);
                    
                    
 	    	   keys = extendedIbY.keys;
                    
-                   arrayTks = setArrayTksX(extendedIbY, bestRemovable, keys);
+                   arrayTks = setArrayTksX(arrayTks, extendedIbY, bestRemovable, keys);
                    
 	    	   removableEdges.removeFirstOccurrence(bestRemovable);
        		}
@@ -452,9 +451,9 @@ public class CNMining
      
 	    ObjectArrayList<Node> removableNodes = new ObjectArrayList<Node>();
             
-            findRemovableNodes(grafoFolded, removableNodes);
-            
-            removeNodes(removableNodes, grafoFolded);
+            findRemovableNodes(n, grafoFolded, removableNodes);
+            Node removableNode = null; 
+            removeNodes(removableNode, removableNodes, grafoFolded);
     	
     	System.out.println("Rappresenzatione grafica...");
  
@@ -833,7 +832,7 @@ public class CNMining
 		}
 	}
    
-	public void bestEdge(Graph unfolded_g, double[][] m, ObjectArrayList<Constraint> lista_vincoli_positivi_unfolded, ObjectArrayList<Constraint> lista_vincoli_positivi_folded, ObjectArrayList<Constraint> vincoli_negati, ObjectArrayList<Forbidden> lista_forbidden, ObjectArrayList<Forbidden> lista_forbidden_unfolded, ObjectIntOpenHashMap<String> map, ObjectObjectOpenHashMap<String, ObjectArrayList<String>> attivita_tracce, ObjectObjectOpenHashMap<String, ObjectArrayList<String>> traccia_attivita, double[][] csm, double sigma, Graph folded_g, ObjectIntOpenHashMap<String> folded_map)
+	public static void bestEdge(Graph unfolded_g, double[][] m, ObjectArrayList<Constraint> lista_vincoli_positivi_unfolded, ObjectArrayList<Constraint> lista_vincoli_positivi_folded, ObjectArrayList<Constraint> vincoli_negati, ObjectArrayList<Forbidden> lista_forbidden, ObjectArrayList<Forbidden> lista_forbidden_unfolded, ObjectIntOpenHashMap<String> map, ObjectObjectOpenHashMap<String, ObjectArrayList<String>> attivita_tracce, ObjectObjectOpenHashMap<String, ObjectArrayList<String>> traccia_attivita, double[][] csm, double sigma, Graph folded_g, ObjectIntOpenHashMap<String> folded_map)
 	{
 		sigma = -100.0D;
 		
@@ -1069,7 +1068,7 @@ public class CNMining
 		}
 	}
         
-        public String A2P1C(boolean[] values, int j, Object[] keys, String activity, ObjectIntOpenHashMap<String> map, double[][] csm, String best_unfolded_item, double best_unfolded_cs, Node ny){
+        public static String A2P1C(boolean[] values, int j, Object[] keys, String activity, ObjectIntOpenHashMap<String> map, double[][] csm, String best_unfolded_item, double best_unfolded_cs, Node ny){
             if (values[j] != false) {
 									String unfolded_item = (String)keys[j];
                                                                                 
@@ -1087,7 +1086,7 @@ public class CNMining
             return best_unfolded_item;
         }
         
-        public String A2P1(ObjectOpenHashSet<String> lista_candidati_best_pred, double[][] csm, Node ny, ObjectIntOpenHashMap<String> map, String best_pred, Graph graph, ObjectArrayList<Constraint> vincoli_negati, ObjectArrayList<Forbidden> lista_forbidden, Graph folded_g, ObjectIntOpenHashMap<String> folded_map){
+        public static String A2P1(ObjectOpenHashSet<String> lista_candidati_best_pred, double[][] csm, Node ny, ObjectIntOpenHashMap<String> map, String best_pred, Graph graph, ObjectArrayList<Constraint> vincoli_negati, ObjectArrayList<Forbidden> lista_forbidden, Graph folded_g, ObjectIntOpenHashMap<String> folded_map){
             if (lista_candidati_best_pred != null)
 			{
             if (lista_candidati_best_pred.size() > 0)
@@ -1125,7 +1124,7 @@ public class CNMining
             return best_pred;
         }
 	
-        public String A2P2C(boolean[] states, int j, Object[] keys, String activity, ObjectIntOpenHashMap<String> map, double[][] csm, String best_unfolded_item, double best_unfolded_cs, Node nx){
+        public static String A2P2C(boolean[] states, int j, Object[] keys, String activity, ObjectIntOpenHashMap<String> map, double[][] csm, String best_unfolded_item, double best_unfolded_cs, Node nx){
             if (states[j] != false) {
 								String unfolded_item = (String)keys[j];
 								if (unfolded_item != null)
@@ -1141,7 +1140,7 @@ public class CNMining
             return best_unfolded_item;
         }
         
-        public String A2P2(ObjectOpenHashSet<String> lista_candidati_best_succ, ObjectIntOpenHashMap<String> map, double[][] csm, Node nx, String best_succ, Graph graph, ObjectArrayList<Constraint> vincoli_negati, ObjectArrayList<Forbidden> lista_forbidden, Graph folded_g, ObjectIntOpenHashMap<String> folded_map){
+        public static String A2P2(ObjectOpenHashSet<String> lista_candidati_best_succ, ObjectIntOpenHashMap<String> map, double[][] csm, Node nx, String best_succ, Graph graph, ObjectArrayList<Constraint> vincoli_negati, ObjectArrayList<Forbidden> lista_forbidden, Graph folded_g, ObjectIntOpenHashMap<String> folded_map){
             if (lista_candidati_best_succ != null) {
             if (lista_candidati_best_succ.size() > 0)
 				{
@@ -1182,7 +1181,7 @@ public class CNMining
             }
             return best_succ;
         }
-        public String A2P3C(boolean[] states, int j, Object[] keys, String activity, ObjectIntOpenHashMap<String> map, double[][] csm, String best_unfolded_item, double best_unfolded_cs, Node nx){
+        public static String A2P3C(boolean[] states, int j, Object[] keys, String activity, ObjectIntOpenHashMap<String> map, double[][] csm, String best_unfolded_item, double best_unfolded_cs, Node nx){
             if (states[j] != false) {
 										String unfolded_item = (String)keys[j];
 										if (unfolded_item != null)
@@ -1197,7 +1196,7 @@ public class CNMining
 									}
             return best_unfolded_item;
         }
-        public String A2P3(String best_pred_yx, ObjectOpenHashSet<String> lista_candidati_best_pred_yx, ObjectIntOpenHashMap<String> map, double [][] csm, Node nx, Graph graph, ObjectArrayList<Constraint> vincoli_negati, ObjectArrayList<Forbidden> lista_forbidden, Graph folded_g, ObjectIntOpenHashMap<String> folded_map){
+        public static String A2P3(String best_pred_yx, ObjectOpenHashSet<String> lista_candidati_best_pred_yx, ObjectIntOpenHashMap<String> map, double [][] csm, Node nx, Graph graph, ObjectArrayList<Constraint> vincoli_negati, ObjectArrayList<Forbidden> lista_forbidden, Graph folded_g, ObjectIntOpenHashMap<String> folded_map){
         if (lista_candidati_best_pred_yx != null)
 					{
             if (lista_candidati_best_pred_yx.size() > 0)
@@ -1234,7 +1233,7 @@ public class CNMining
          return best_pred_yx;
         }
         
-        public String A2P2C(boolean[] states, int j, Object[] keys, String activity, ObjectIntOpenHashMap<String> map, double[][] csm, String best_unfolded_item, double best_unfolded_cs, Node ny){
+        public static String A2P2C(boolean[] states, int j, Object[] keys, String activity, ObjectIntOpenHashMap<String> map, double[][] csm, String best_unfolded_item, double best_unfolded_cs, Node ny){
             if (states[j] != false) {
 										String unfolded_item = (String)keys[j];
                      
@@ -1253,7 +1252,7 @@ public class CNMining
         }								
 
         
-        public String A2P4(ObjectOpenHashSet<String> lista_candidati_best_succ_yx, String best_succ_yx, ObjectOpenHashSet<String> lista_candidati_best_succ, ObjectIntOpenHashMap<String> map, double [][] csm, Node ny, Graph graph, ObjectArrayList<Constraint> vincoli_negati, ObjectArrayList<Forbidden> lista_forbidden, Graph folded_g, ObjectIntOpenHashMap<String> folded_map){
+        public static String A2P4(ObjectOpenHashSet<String> lista_candidati_best_succ_yx, String best_succ_yx, ObjectOpenHashSet<String> lista_candidati_best_succ, ObjectIntOpenHashMap<String> map, double [][] csm, Node ny, Graph graph, ObjectArrayList<Constraint> vincoli_negati, ObjectArrayList<Forbidden> lista_forbidden, Graph folded_g, ObjectIntOpenHashMap<String> folded_map){
             if (lista_candidati_best_succ_yx != null) {
             if (lista_candidati_best_succ_yx.size() > 0)
 						{
@@ -1291,7 +1290,7 @@ public class CNMining
             return best_succ_yx;
         }
         
-        public void A2P1_1(String best_pred, Graph graph, double[][] m, Node ny, ObjectIntOpenHashMap<String> map){
+        public static void A2P1_1(String best_pred, Graph graph, double[][] m, Node ny, ObjectIntOpenHashMap<String> map){
             if (!best_pred.equals(""))
 			{		
 				Node nz = graph.getNode(getKeyByValue(map, map.get(best_pred)), map.get(best_pred));
@@ -1307,7 +1306,7 @@ public class CNMining
 			}
         }
         
-        public void A2P1_2(String best_succ, Graph graph, double[][] m, Node nx, ObjectIntOpenHashMap<String> map){
+        public static void A2P1_2(String best_succ, Graph graph, double[][] m, Node nx, ObjectIntOpenHashMap<String> map){
             if (!best_succ.equals(""))
 			{				
 				Node nw = graph.getNode(getKeyByValue(map, map.get(best_succ)), map.get(best_succ));
@@ -1323,7 +1322,7 @@ public class CNMining
 			}
         }
         
-        public void A2P3_1(FakeDependency best_ap, String best_pred_yx, Graph graph, double[][] m, Node nx, ObjectIntOpenHashMap<String> map){
+        public static void A2P3_1(FakeDependency best_ap, String best_pred_yx, Graph graph, double[][] m, Node nx, ObjectIntOpenHashMap<String> map){
             if (!best_pred_yx.equals(""))
 					{
 						Node nz = graph.getNode(getKeyByValue(map, map.get(best_pred_yx)), map.get(best_pred_yx));
@@ -1339,7 +1338,7 @@ public class CNMining
 					}
         }
 
-	public void A2P4_1(String best_succ, FakeDependency best_ap, String best_succ_yx, Graph graph, double[][] m, Node ny, ObjectIntOpenHashMap<String> map){
+	public static void A2P4_1(String best_succ, FakeDependency best_ap, String best_succ_yx, Graph graph, double[][] m, Node ny, ObjectIntOpenHashMap<String> map){
             if (!best_succ_yx.equals(""))
 					{
 						Node nw = graph.getNode(getKeyByValue(map, map.get(best_succ_yx)), map.get(best_succ_yx));
@@ -1574,7 +1573,7 @@ public class CNMining
 		return attivita_candidate;
 	}
         
-        public boolean findAtLeastOnePath(Node t, Node x, Node y, ObjectArrayList<Node> path, boolean atLeastOnePath){
+        public static boolean findAtLeastOnePath(Node t, Node x, Node y, ObjectArrayList<Node> path, boolean atLeastOnePath){
             if (t.equals(y)) {
 				if (x.equals(y)) {
 					if (path.size() > 1) {
@@ -1587,7 +1586,7 @@ public class CNMining
             return atLeastOnePath;
         }
         
-        public ObjectArrayList<Node> setPath(ObjectArrayList<Node> path){
+        public static ObjectArrayList<Node> setPath(ObjectArrayList<Node> path){
             if (path == null){
 		        path = new ObjectArrayList<Node>();
             }
@@ -1670,7 +1669,7 @@ public class CNMining
 		return mNext;
 	}
         
-        public double [][] funzPredecessors(double[][] mNext, ObjectArrayList<String> predecessors, double[][] cs, ObjectIntOpenHashMap<String> map, String activity_x, double bestPredCS, String bestPred, ObjectArrayList<Forbidden> lista_forbidden_unfolded){
+        public static double [][] funzPredecessors(double[][] mNext, ObjectArrayList<String> predecessors, double[][] cs, ObjectIntOpenHashMap<String> map, String activity_x, double bestPredCS, String bestPred, ObjectArrayList<Forbidden> lista_forbidden_unfolded){
             int itPred = 0;
 						Object[] buffer = predecessors.buffer;
 						while (itPred < predecessors.size()) {
@@ -1691,7 +1690,7 @@ public class CNMining
                                                 return mNext;
         }
         
-        public double [][] funzSuccessors(double[][] mNext, ObjectArrayList<String> successors, double[][] cs, ObjectIntOpenHashMap<String> map, String activity_x, double bestSuccCS, String bestSucc, ObjectArrayList<Forbidden> lista_forbidden_unfolded){
+        public static double [][] funzSuccessors(double[][] mNext, ObjectArrayList<String> successors, double[][] cs, ObjectIntOpenHashMap<String> map, String activity_x, double bestSuccCS, String bestSucc, ObjectArrayList<Forbidden> lista_forbidden_unfolded){
             int itSucc = 0;
 						Object[] buffer = successors.buffer;
 						while (itSucc < successors.size()) {
@@ -1804,7 +1803,7 @@ public class CNMining
 		}
 	}
         
-        public Node[] nPCP1(ObjectArrayList<Node> listaNodiPath, Node z, Node w, Node zz, Node ww, Graph unfolded_g, ObjectArrayList<Edge> archiRimossi, double[][] csm, double minCs){
+        public static Node[] nPCP1(ObjectArrayList<Node> listaNodiPath, Node z, Node w, Node zz, Node ww, Graph unfolded_g, ObjectArrayList<Edge> archiRimossi, double[][] csm, double minCs){
             for (int i = 0; i < listaNodiPath.size() - 1; i++) {
 						for (int j = i + 1; j < listaNodiPath.size(); j++)
 						{
@@ -1828,7 +1827,7 @@ public class CNMining
             return ret;
         }
         
-        public String nPCP2(String best_pred, ObjectOpenHashSet<String> lista_candidati_best_pred, ObjectIntOpenHashMap<String> map, double[][] csm, Node w, Graph unfolded_g, Node z, ObjectArrayList<Constraint> vincoli_negati, ObjectArrayList<Forbidden> lista_forbidden, Graph folded_g, ObjectIntOpenHashMap<String> folded_map){
+        public static String nPCP2(String best_pred, ObjectOpenHashSet<String> lista_candidati_best_pred, ObjectIntOpenHashMap<String> map, double[][] csm, Node w, Graph unfolded_g, Node z, ObjectArrayList<Constraint> vincoli_negati, ObjectArrayList<Forbidden> lista_forbidden, Graph folded_g, ObjectIntOpenHashMap<String> folded_map){
             if (lista_candidati_best_pred != null)
 					{
 						if (lista_candidati_best_pred.size() > 0)
@@ -1865,7 +1864,7 @@ public class CNMining
             return best_pred;
         }
         
-        public String nPCP3(String best_succ, ObjectOpenHashSet<String> lista_candidati_best_succ, ObjectIntOpenHashMap<String> map, double[][] csm, Node w, Graph unfolded_g, Node z, ObjectArrayList<Constraint> vincoli_negati, ObjectArrayList<Forbidden> lista_forbidden, Graph folded_g, ObjectIntOpenHashMap<String> folded_map){
+        public static String nPCP3(String best_succ, ObjectOpenHashSet<String> lista_candidati_best_succ, ObjectIntOpenHashMap<String> map, double[][] csm, Node w, Graph unfolded_g, Node z, ObjectArrayList<Constraint> vincoli_negati, ObjectArrayList<Forbidden> lista_forbidden, Graph folded_g, ObjectIntOpenHashMap<String> folded_map){
             if ((lista_candidati_best_succ != null) && 
 						(lista_candidati_best_succ.size() > 0))
 					{
@@ -1898,7 +1897,7 @@ public class CNMining
             return best_succ;
         }
         
-        public void nPCP2_1(String best_pred, Graph unfolded_g, ObjectIntOpenHashMap<String> map, Node w, double[][] m){
+        public static void nPCP2_1(String best_pred, Graph unfolded_g, ObjectIntOpenHashMap<String> map, Node w, double[][] m){
             if (!best_pred.equals(""))
 					{
 						Node nz = unfolded_g.getNode(getKeyByValue(map, map.get(best_pred)), map.get(best_pred));
@@ -1913,7 +1912,7 @@ public class CNMining
 						}
 					}   
         }
-        public void nPCP3_1(String best_succ, Graph unfolded_g, ObjectIntOpenHashMap<String> map, Node z, double[][] m){
+        public static void nPCP3_1(String best_succ, Graph unfolded_g, ObjectIntOpenHashMap<String> map, Node z, double[][] m){
             if (!best_succ.equals(""))
 					{ 
 						Node nw = unfolded_g.getNode(getKeyByValue(map, map.get(best_succ)), map.get(best_succ));
@@ -2053,7 +2052,7 @@ public class CNMining
 		return weightMatrix;
   	}
         
-        public void cVUP1(int i, ObjectIntOpenHashMap<String> map, Iterator localIterator, ObjectArrayList<Constraint> vincoli_positivi_unfolded){
+        public static void cVUP1(int i, ObjectIntOpenHashMap<String> map, Iterator localIterator, ObjectArrayList<Constraint> vincoli_positivi_unfolded){
             ObjectCursor<Constraint> c = (ObjectCursor)localIterator.next();
 			       
 			Object[] keys = map.keys;
@@ -2081,7 +2080,7 @@ public class CNMining
 		         }
 			}
         }
-        public void cVUP2(int i, ObjectIntOpenHashMap<String> map, Iterator localIterator, ObjectArrayList<Constraint> vincoli_negati_unfolded, ObjectArrayList<Forbidden> lista_forbidden_unfolded){
+        public static void cVUP2(int i, ObjectIntOpenHashMap<String> map, Iterator localIterator, ObjectArrayList<Constraint> vincoli_negati_unfolded, ObjectArrayList<Forbidden> lista_forbidden_unfolded){
             ObjectCursor<Constraint> c = (ObjectCursor)localIterator.next();
 					 
 			Object[] keys2 = map.keys;
@@ -2111,7 +2110,7 @@ public class CNMining
 	       	}
         }
     
-	public void creaVincoliUnfolded(ObjectArrayList<Constraint> vincoli_positivi, ObjectArrayList<Constraint> vincoli_negati, ObjectArrayList<Forbidden> lista_forbidden, ObjectArrayList<Constraint> vincoli_positivi_unfolded, ObjectArrayList<Constraint> vincoli_negati_unfolded, ObjectArrayList<Forbidden> lista_forbidden_unfolded, ObjectIntOpenHashMap<String> map)
+	public static void creaVincoliUnfolded(ObjectArrayList<Constraint> vincoli_positivi, ObjectArrayList<Constraint> vincoli_negati, ObjectArrayList<Forbidden> lista_forbidden, ObjectArrayList<Constraint> vincoli_positivi_unfolded, ObjectArrayList<Constraint> vincoli_negati_unfolded, ObjectArrayList<Forbidden> lista_forbidden_unfolded, ObjectIntOpenHashMap<String> map)
 	{
 		int i = 0;
 		
@@ -2133,7 +2132,7 @@ public class CNMining
 		}     
 	} 
         
-        public String eFP1(String best_pred, ObjectOpenHashSet<String> lista_candidati_best_pred, String best_unfolded_item, ObjectIntOpenHashMap<String> map, double[][] csm, Node y, Graph g, ObjectArrayList<Constraint> vincoli_negati, Graph folded_g, ObjectIntOpenHashMap<String> folded_map, ObjectArrayList<Forbidden> lista_forbidden){
+        public static String eFP1(String best_pred, ObjectOpenHashSet<String> lista_candidati_best_pred, String best_unfolded_item, ObjectIntOpenHashMap<String> map, double[][] csm, Node y, Graph g, ObjectArrayList<Constraint> vincoli_negati, Graph folded_g, ObjectIntOpenHashMap<String> folded_map, ObjectArrayList<Forbidden> lista_forbidden){
             if (lista_candidati_best_pred != null)
 					{
 						if (lista_candidati_best_pred.size() > 0)
@@ -2171,7 +2170,7 @@ public class CNMining
                                                 return best_pred;
         }
         
-        public String eFP2(String best_succ, ObjectOpenHashSet<String> lista_candidati_best_succ, String best_unfolded_item, ObjectIntOpenHashMap<String> map, double[][] csm, Node x, Graph g, ObjectArrayList<Constraint> vincoli_negati, Graph folded_g, ObjectIntOpenHashMap<String> folded_map, ObjectArrayList<Forbidden> lista_forbidden){
+        public static String eFP2(String best_succ, ObjectOpenHashSet<String> lista_candidati_best_succ, String best_unfolded_item, ObjectIntOpenHashMap<String> map, double[][] csm, Node x, Graph g, ObjectArrayList<Constraint> vincoli_negati, Graph folded_g, ObjectIntOpenHashMap<String> folded_map, ObjectArrayList<Forbidden> lista_forbidden){
             if (lista_candidati_best_succ != null) {
 						if (lista_candidati_best_succ.size() > 0)
 						{
@@ -2208,7 +2207,7 @@ public class CNMining
             return best_succ;
         }
  
-	public void eliminaForbidden(Graph g, ObjectArrayList<Forbidden> lista_forbidden_unfolded, ObjectArrayList<Forbidden> lista_forbidden, ObjectIntOpenHashMap<String> map, double[][] m, double[][] csm, ObjectObjectOpenHashMap<String, ObjectArrayList<String>> attivita_tracce, ObjectObjectOpenHashMap<String, ObjectArrayList<String>> traccia_attivita, ObjectArrayList<Constraint> vincoli_positivi, ObjectArrayList<Constraint> vincoli_negati, Graph folded_g, ObjectIntOpenHashMap<String> folded_map)
+	public static void eliminaForbidden(Graph g, ObjectArrayList<Forbidden> lista_forbidden_unfolded, ObjectArrayList<Forbidden> lista_forbidden, ObjectIntOpenHashMap<String> map, double[][] m, double[][] csm, ObjectObjectOpenHashMap<String, ObjectArrayList<String>> attivita_tracce, ObjectObjectOpenHashMap<String, ObjectArrayList<String>> traccia_attivita, ObjectArrayList<Constraint> vincoli_positivi, ObjectArrayList<Constraint> vincoli_negati, Graph folded_g, ObjectIntOpenHashMap<String> folded_map)
 	{
 		int it = 0;
      
@@ -2290,7 +2289,7 @@ public class CNMining
 		}
 	}
         
-        public int eAP0(boolean forward, ObjectObjectOpenHashMap<String, ObjectArrayList<String>> traccia_attivita, String trace, int iter){
+        public static int eAP0(boolean forward, ObjectObjectOpenHashMap<String, ObjectArrayList<String>> traccia_attivita, String trace, int iter){
             if (!forward) {
 			iter = ((ObjectArrayList)traccia_attivita.get(trace)).size() - 1;
 		}
@@ -2300,7 +2299,7 @@ public class CNMining
             return iter;
         }
         
-        public String eAP1(String activity_z, boolean trovata_y, boolean forward, int iter, ObjectObjectOpenHashMap<String, ObjectArrayList<String>> traccia_attivita, String trace){
+        public static String eAP1(String activity_z, boolean trovata_y, boolean forward, int iter, ObjectObjectOpenHashMap<String, ObjectArrayList<String>> traccia_attivita, String trace){
             if (!trovata_y)
 				{
 					trovata_y = true;
@@ -2315,7 +2314,7 @@ public class CNMining
             return activity_z;
         }
         
-        public boolean eAP2(String activity_z, String activity_x, String activity_y, ObjectArrayList<String> attivatore_traccia, ObjectOpenHashSet<String> candidati_z, boolean trovata_y){
+        public static boolean eAP2(String activity_z, String activity_x, String activity_y, ObjectArrayList<String> attivatore_traccia, ObjectOpenHashSet<String> candidati_z, boolean trovata_y){
             if (!activity_z.equals(activity_x))
 					{
 						if (!attivatore_traccia.contains(activity_z)) {
@@ -2338,7 +2337,7 @@ public class CNMining
             return true;
         }
         
-        public boolean eAP3(String activity_z, String activity_y, ObjectArrayList<String> attivatore_traccia, ObjectOpenHashSet<String> candidati_z, boolean autoanello_y){
+        public static boolean eAP3(String activity_z, String activity_y, ObjectArrayList<String> attivatore_traccia, ObjectOpenHashSet<String> candidati_z, boolean autoanello_y){
             if (!activity_z.equals(activity_y))
 				{
 					if (!attivatore_traccia.contains(activity_z)) {
@@ -2355,7 +2354,7 @@ public class CNMining
             return true;
         }
         
-        public int setIter(boolean forward, int iter){
+        public static int setIter(boolean forward, int iter){
            if (!forward) {
 					iter--;
 				} else {
@@ -2364,7 +2363,7 @@ public class CNMining
             return iter; 
         }
         
-        public boolean eAPC(boolean trovata_y, boolean flag, String trace, int iter, String activity_x, String activity_z, String activity_y, ObjectArrayList<String> attivatore_traccia, ObjectObjectOpenHashMap<String, ObjectArrayList<String>> traccia_attivita, ObjectOpenHashSet<String> candidati_z, boolean autoanello_y, boolean forward){
+        public static boolean eAPC(boolean trovata_y, boolean flag, String trace, int iter, String activity_x, String activity_z, String activity_y, ObjectArrayList<String> attivatore_traccia, ObjectObjectOpenHashMap<String, ObjectArrayList<String>> traccia_attivita, ObjectOpenHashSet<String> candidati_z, boolean autoanello_y, boolean forward){
             if ((!trovata_y) && (!activity_z.equals(activity_y)))
 			{
                             iter = setIter(forward, iter);
@@ -2493,7 +2492,7 @@ public class CNMining
 		return lista_attivita_parallele;
 	} 
         
-        public void gFBPP1(ObjectArrayList<Constraint> vincoli_negati, String attivita_z, ObjectArrayList<Node> c_nodes, ObjectIntOpenHashMap<String> folded_map){
+        public static void gFBPP1(ObjectArrayList<Constraint> vincoli_negati, String attivita_z, ObjectArrayList<Node> c_nodes, ObjectIntOpenHashMap<String> folded_map){
             for (ObjectCursor<Constraint> cpn : vincoli_negati)
 				{
 					if (((Constraint)cpn.value).isPathConstraint())
@@ -2507,7 +2506,7 @@ public class CNMining
 				}
         }
         
-        public int gFBPP2(Node ny, ObjectIntOpenHashMap<String> folded_map, Iterator localIterator5, Iterator localIterator6, ObjectCursor<Node> n, Graph folded_g, int violations_counter){
+        public static int gFBPP2(Node ny, ObjectIntOpenHashMap<String> folded_map, Iterator localIterator5, Iterator localIterator6, ObjectCursor<Node> n, Graph folded_g, int violations_counter){
             while(localIterator5.hasNext() && localIterator6.hasNext())
 				{
 					ObjectCursor<Node> c = (ObjectCursor)localIterator6.next();
@@ -2526,7 +2525,7 @@ public class CNMining
             return violations_counter;
         }
         
-        public int gFBPP3(ObjectArrayList<Constraint> vincoli_negati, Node z, Node ny, Iterator localIterator5, Iterator localIterator7, Graph folded_g, int violations_counter){
+        public static int gFBPP3(ObjectArrayList<Constraint> vincoli_negati, Node z, Node ny, Iterator localIterator5, Iterator localIterator7, Graph folded_g, int violations_counter){
             while(localIterator7.hasNext() && localIterator5.hasNext())
 				{
 					Object n = localIterator7.next();
@@ -2546,7 +2545,7 @@ public class CNMining
             return violations_counter;
         }
         
-        public String gFBPP4(String best_pred, double[][] csm, ObjectIntOpenHashMap<String> map, int violations_counter, String attivita_z, double minZ, Node ny, double best_pred_cs){
+        public static String gFBPP4(String best_pred, double[][] csm, ObjectIntOpenHashMap<String> map, int violations_counter, String attivita_z, double minZ, Node ny, double best_pred_cs){
             if (violations_counter < minZ) {
 					minZ = violations_counter;
            
@@ -2609,7 +2608,7 @@ public class CNMining
 		}     
 		return best_pred;
 	}
-        public void gFBSP1(ObjectArrayList<Constraint> vincoli_negati, ObjectArrayList<Node> c_nodes, ObjectIntOpenHashMap<String> folded_map, Node nx){
+        public static void gFBSP1(ObjectArrayList<Constraint> vincoli_negati, ObjectArrayList<Node> c_nodes, ObjectIntOpenHashMap<String> folded_map, Node nx){
             for (ObjectCursor<Constraint> cpn : vincoli_negati)
 		{
 			if (((Constraint)cpn.value).isPathConstraint())
@@ -2623,7 +2622,7 @@ public class CNMining
 		}
         }
         
-        public int gFBSP2(Node nw, Iterator localIterator4, Iterator localIterator5, ObjectCursor<Node> n, Graph folded_g, int violations_counter){
+        public static int gFBSP2(Node nw, Iterator localIterator4, Iterator localIterator5, ObjectCursor<Node> n, Graph folded_g, int violations_counter){
             while(localIterator4.hasNext() && localIterator5.hasNext())
 				{
 					ObjectCursor<Node> c = (ObjectCursor)localIterator4.next();
@@ -2639,7 +2638,7 @@ public class CNMining
             return violations_counter;
         }
         
-        public int gFBPP3(ObjectCursor<Node> n, ObjectCursor<String> attivita_w, ObjectArrayList<Constraint> vincoli_negati, Node x, Iterator localIterator4, Iterator localIterator6, Graph folded_g, int violations_counter){
+        public static int gFBPP3(ObjectCursor<Node> n, ObjectCursor<String> attivita_w, ObjectArrayList<Constraint> vincoli_negati, Node x, Iterator localIterator4, Iterator localIterator6, Graph folded_g, int violations_counter){
             while(localIterator4.hasNext() && localIterator6.hasNext())
 				{
 					n = (ObjectCursor)localIterator4.next();
@@ -2714,7 +2713,7 @@ public class CNMining
 		return best_succ;
 	}
         
-        public static int gGAP1(int count, XLog log, ObjectObjectOpenHashMap<String, ObjectArrayList<String>> traccia_attivitaOri, ObjectIntOpenHashMap<String> mapOri, ObjectObjectOpenHashMap<String, ObjectArrayList<String>> attivita_tracceOri){
+        public static static int gGAP1(int count, XLog log, ObjectObjectOpenHashMap<String, ObjectArrayList<String>> traccia_attivitaOri, ObjectIntOpenHashMap<String> mapOri, ObjectObjectOpenHashMap<String, ObjectArrayList<String>> attivita_tracceOri){
            for (int i = 0; i < log.size(); i++) {
 				XTrace trace = (XTrace)log.get(i);
 				String traccia = trace.getAttributes().get("concept:name") + " # " + i;
