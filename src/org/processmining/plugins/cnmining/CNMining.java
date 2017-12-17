@@ -2492,6 +2492,76 @@ public class CNMining
 
 		return lista_attivita_parallele;
 	} 
+        
+        public void gFBPP1(ObjectArrayList<Constraint> vincoli_negati, String attivita_z, ObjectArrayList<Node> c_nodes, ObjectIntOpenHashMap<String> folded_map){
+            for (ObjectCursor<Constraint> cpn : vincoli_negati)
+				{
+					if (((Constraint)cpn.value).isPathConstraint())
+					{
+						if (((Constraint)cpn.value).getBodyList().contains(attivita_z.split("#")[0])) {
+							for (String head : ((Constraint)cpn.value).getHeadList()) {
+								c_nodes.add(new Node(head.split("#")[0], folded_map.get(head.split("#")[0])));
+							}
+						}
+					}
+				}
+        }
+        
+        public int gFBPP2(Node ny, ObjectIntOpenHashMap<String> folded_map, Iterator localIterator5, Iterator localIterator6, ObjectCursor<Node> n, Graph folded_g, int violations_counter){
+            while(localIterator5.hasNext() && localIterator6.hasNext())
+				{
+					ObjectCursor<Node> c = (ObjectCursor)localIterator6.next();
+				   
+					for (ObjectCursor<Node> n : folded_g.listaNodi()) {
+						((Node)n.value).setMark(false);
+					}
+					boolean path_violated = bfs(folded_g, folded_g.getNode(ny.getNomeAttivita().split("#")[0], folded_map.get(ny.getNomeAttivita().split("#")[0])), (Node)c.value, null, null);
+					              
+					if (path_violated) {
+						violations_counter++;
+					}
+					Object n = (ObjectCursor)localIterator5.next();
+					((Node)((ObjectCursor)n).value).setMark(false);
+				}
+            return violations_counter;
+        }
+        
+        public int gFBPP3(ObjectArrayList<Constraint> vincoli_negati, Node z, Node ny, Iterator localIterator5, Iterator localIterator7, Graph folded_g, int violations_counter){
+            while(localIterator7.hasNext() && localIterator5.hasNext())
+				{
+					Object n = localIterator7.next();
+					if (bfs(folded_g, (Node)((ObjectCursor)n).value, z, null, null))
+					{
+						for (Object cpn : vincoli_negati) {
+							if (((Constraint)((ObjectCursor)cpn).value).isPathConstraint())
+							{
+								if ((((Constraint)((ObjectCursor)cpn).value).getBodyList().contains(((Node)((ObjectCursor<Node>)n).value).getNomeAttivita().split("#")[0])) && (((Constraint)((ObjectCursor)cpn).value).getHeadList().contains(ny.getNomeAttivita().split("#")[0])))
+								{
+									violations_counter++; } }
+								}
+							}
+						Object nn = (ObjectCursor)localIterator5.next();
+						((Node)((ObjectCursor)nn).value).setMark(false);
+					}
+            return violations_counter;
+        }
+        
+        public String gFBPP4(String best_pred, double[][] csm, ObjectIntOpenHashMap<String> map, int violations_counter, String attivita_z, double minZ, Node ny, double best_pred_cs){
+            if (violations_counter < minZ) {
+					minZ = violations_counter;
+           
+					best_pred = attivita_z;
+					best_pred_cs = csm[map.get(attivita_z)][ny.getID_attivita()];
+				}
+				else if (violations_counter == minZ)
+				{
+					if (csm[map.get(attivita_z)][ny.getID_attivita()] > best_pred_cs) {
+						best_pred = attivita_z;
+						best_pred_cs = csm[map.get(attivita_z)][ny.getID_attivita()];
+					}
+				}
+            return best_pred;
+        }
  
 	private String getFinalBestPred(Graph graph, double[][] csm, Node ny, ObjectIntOpenHashMap<String> map, ObjectArrayList<String> lista_candidati_best_pred_unfolded, ObjectArrayList<Constraint> vincoli_negati, ObjectArrayList<Forbidden> lista_forbidden, Graph folded_g, ObjectIntOpenHashMap<String> folded_map, boolean onlyNotPath)
 	{
@@ -2519,74 +2589,75 @@ public class CNMining
        
 			if (!lista_forbidden.contains(f))
 			{ 
-				for (ObjectCursor<Constraint> cpn : vincoli_negati)
-				{
-					if (((Constraint)cpn.value).isPathConstraint())
-					{
-						if (((Constraint)cpn.value).getBodyList().contains(attivita_z.split("#")[0])) {
-							for (String head : ((Constraint)cpn.value).getHeadList()) {
-								c_nodes.add(new Node(head.split("#")[0], folded_map.get(head.split("#")[0])));
-							}
-						}
-					}
-				}
+                            gFBPP1(vincoli_negati, attivita_z, c_nodes, folded_map);
+				
 
 				Iterator localIterator5 = folded_g.listaNodi().iterator();
 				Iterator localIterator6 = c_nodes.iterator();
-				while(localIterator5.hasNext() && localIterator6.hasNext())
-				{
-					ObjectCursor<Node> c = (ObjectCursor)localIterator6.next();
-				   
-					for (ObjectCursor<Node> n : folded_g.listaNodi()) {
-						((Node)n.value).setMark(false);
-					}
-					boolean path_violated = bfs(folded_g, folded_g.getNode(ny.getNomeAttivita().split("#")[0], folded_map.get(ny.getNomeAttivita().split("#")[0])), (Node)c.value, null, null);
-					              
-					if (path_violated) {
-						violations_counter++;
-					}
-					Object n = (ObjectCursor)localIterator5.next();
-					((Node)((ObjectCursor)n).value).setMark(false);
-				}
+                                violations_counter = gFBPP2(localIterator5, localIterator6, n, folded_g, violations_counter);
+				
          
 				Node z = new Node(attivita_z.split("#")[0], folded_map.get(attivita_z.split("#")[0]));
          
 				Iterator localIterator7 = folded_g.listaNodi().iterator();
 				localIterator5 = folded_g.listaNodi().iterator();
-				while(localIterator7.hasNext() && localIterator5.hasNext())
-				{
-					Object n = localIterator7.next();
-					if (bfs(folded_g, (Node)((ObjectCursor)n).value, z, null, null))
-					{
-						for (Object cpn : vincoli_negati) {
-							if (((Constraint)((ObjectCursor)cpn).value).isPathConstraint())
-							{
-								if ((((Constraint)((ObjectCursor)cpn).value).getBodyList().contains(((Node)((ObjectCursor<Node>)n).value).getNomeAttivita().split("#")[0])) && (((Constraint)((ObjectCursor)cpn).value).getHeadList().contains(ny.getNomeAttivita().split("#")[0])))
-								{
-									violations_counter++; } }
-								}
-							}
-						Object nn = (ObjectCursor)localIterator5.next();
-						((Node)((ObjectCursor)nn).value).setMark(false);
-					}
+                                violations_counter = gFBPP3(vincoli_negati, z, ny, localIterator5, localIterator7, folded_g, violations_counter);
 				
-				if (violations_counter < minZ) {
-					minZ = violations_counter;
-           
-					best_pred = attivita_z;
-					best_pred_cs = csm[map.get(attivita_z)][ny.getID_attivita()];
-				}
-				else if (violations_counter == minZ)
-				{
-					if (csm[map.get(attivita_z)][ny.getID_attivita()] > best_pred_cs) {
-						best_pred = attivita_z;
-						best_pred_cs = csm[map.get(attivita_z)][ny.getID_attivita()];
-					}
-				}
+				best_pred = gFBPP4(best_pred, csm,  map, violations_counter, attivita_z, minZ, ny, best_pred_cs);
+				
 			}
 		}     
 		return best_pred;
 	}
+        public void gFBSP1(ObjectArrayList<Constraint> vincoli_negati, ObjectArrayList<Node> c_nodes, ObjectIntOpenHashMap<String> folded_map, Node nx){
+            for (ObjectCursor<Constraint> cpn : vincoli_negati)
+		{
+			if (((Constraint)cpn.value).isPathConstraint())
+			{
+				if (((Constraint)cpn.value).getBodyList().contains(nx.getNomeAttivita().split("#")[0])) {
+					for (String head : ((Constraint)cpn.value).getHeadList()) {
+						c_nodes.add(new Node(head.split("#")[0], folded_map.get(head.split("#")[0])));
+					}
+				}
+			}
+		}
+        }
+        
+        public int gFBSP2(Node nw, Iterator localIterator4, Iterator localIterator5, ObjectCursor<Node> n, Graph folded_g, int violations_counter){
+            while(localIterator4.hasNext() && localIterator5.hasNext())
+				{
+					ObjectCursor<Node> c = (ObjectCursor)localIterator4.next();
+					 
+					boolean path_violated = bfs(folded_g, nw, (Node)c.value, null, null);
+           
+					if (path_violated) {
+						violations_counter++;
+					}
+					n = (ObjectCursor)localIterator5.next();
+					((Node)n.value).setMark(false);
+				}
+            return violations_counter;
+        }
+        
+        public int gFBPP3(ObjectCursor<Node> n, ObjectCursor<String> attivita_w, ObjectArrayList<Constraint> vincoli_negati, Node x, Iterator localIterator4, Iterator localIterator6, Graph folded_g, int violations_counter){
+            while(localIterator4.hasNext() && localIterator6.hasNext())
+				{
+					n = (ObjectCursor)localIterator4.next();
+					if (bfs(folded_g, (Node)n.value, x, null, null))
+					{
+						for (ObjectCursor<Constraint> cpn : vincoli_negati) {
+							if ((((Constraint)cpn.value).isPathConstraint()) && 
+								(((Constraint)cpn.value).getBodyList().contains(((Node)n.value).getNomeAttivita().split("#")[0])) && (((Constraint)cpn.value).getHeadList().contains(((String)attivita_w.value).split("#")[0])))
+							{
+								violations_counter++; 
+							}
+						}
+					}
+					ObjectCursor<Node> nn = (ObjectCursor<Node>) localIterator6.next();
+					((Node)nn.value).setMark(false);
+				}
+            return violations_counter;
+        }
  
 	private String getFinalBestSucc(Graph graph, double[][] csm, Node nx, ObjectIntOpenHashMap<String> map, ObjectArrayList<String> lista_candidati_best_succ_unfolded, ObjectArrayList<Constraint> vincoli_negati, ObjectArrayList<Forbidden> lista_forbidden, Graph folded_g, ObjectIntOpenHashMap<String> folded_map, boolean notPathOnly)
 	{
@@ -2604,18 +2675,8 @@ public class CNMining
 			minW = 0.0D;
 		}
 		ObjectArrayList<Node> c_nodes = new ObjectArrayList();
-      
-		for (ObjectCursor<Constraint> cpn : vincoli_negati)
-		{
-			if (((Constraint)cpn.value).isPathConstraint())
-			{
-				if (((Constraint)cpn.value).getBodyList().contains(nx.getNomeAttivita().split("#")[0])) {
-					for (String head : ((Constraint)cpn.value).getHeadList()) {
-						c_nodes.add(new Node(head.split("#")[0], folded_map.get(head.split("#")[0])));
-					}
-				}
-			}
-		}
+                gFBSP1(vincoli_negati, c_nodes, folded_map, nx);
+		
 		for (ObjectCursor<String> attivita_w : lista_candidati_best_succ_unfolded)
 		{
 			int violations_counter = 0;
@@ -2628,40 +2689,14 @@ public class CNMining
 				Node nw = folded_g.getNode(((String)attivita_w.value).split("#")[0], folded_map.get(((String)attivita_w.value).split("#")[0]));
 				Iterator localIterator5 = folded_g.listaNodi().iterator();
 				Iterator localIterator4 = c_nodes.iterator();
-				ObjectCursor<Node> n; 
-					
-				while(localIterator4.hasNext() && localIterator5.hasNext())
-				{
-					ObjectCursor<Node> c = (ObjectCursor)localIterator4.next();
-					 
-					boolean path_violated = bfs(folded_g, nw, (Node)c.value, null, null);
-           
-					if (path_violated) {
-						violations_counter++;
-					}
-					n = (ObjectCursor)localIterator5.next();
-					((Node)n.value).setMark(false);
-				}
+				ObjectCursor<Node> n = null; 
+                                violations_counter = gFBSP2(nw, localIterator4, localIterator5, n, folded_g, violations_counter);
+				
           
 				localIterator4 = folded_g.listaNodi().iterator();
 				Iterator localIterator6 = folded_g.listaNodi().iterator();
+				violations_counter = gFBPP3(n, attivita_w, vincoli_negati, x, localIterator4, localIterator6, folded_g, violations_counter);
 				
-				while(localIterator4.hasNext() && localIterator6.hasNext())
-				{
-					n = (ObjectCursor)localIterator4.next();
-					if (bfs(folded_g, (Node)n.value, x, null, null))
-					{
-						for (ObjectCursor<Constraint> cpn : vincoli_negati) {
-							if ((((Constraint)cpn.value).isPathConstraint()) && 
-								(((Constraint)cpn.value).getBodyList().contains(((Node)n.value).getNomeAttivita().split("#")[0])) && (((Constraint)cpn.value).getHeadList().contains(((String)attivita_w.value).split("#")[0])))
-							{
-								violations_counter++; 
-							}
-						}
-					}
-					ObjectCursor<Node> nn = (ObjectCursor<Node>) localIterator6.next();
-					((Node)nn.value).setMark(false);
-				}
 				if (violations_counter < minW)
 				{
 					best_succ = (String)attivita_w.value;
@@ -2678,16 +2713,9 @@ public class CNMining
 		}
 		return best_succ;
 	}
- 
-	public Graph getGrafoAggregato(Graph g, XLog log, boolean flag, ObjectIntOpenHashMap<String> mapOri, ObjectObjectOpenHashMap<String, ObjectArrayList<String>> attivita_tracceOri, ObjectObjectOpenHashMap<String, ObjectArrayList<String>> traccia_attivitaOri)
-	{
-		if (flag)
-		{
-			time += System.currentTimeMillis();
         
-			int count = 0;
-			
-			for (int i = 0; i < log.size(); i++) {
+        public static int gGAP1(int count, XLog log, ObjectObjectOpenHashMap<String, ObjectArrayList<String>> traccia_attivitaOri, ObjectIntOpenHashMap<String> mapOri, ObjectObjectOpenHashMap<String, ObjectArrayList<String>> attivita_tracceOri){
+           for (int i = 0; i < log.size(); i++) {
 				XTrace trace = (XTrace)log.get(i);
 				String traccia = trace.getAttributes().get("concept:name") + " # " + i;
          
@@ -2715,18 +2743,11 @@ public class CNMining
 					((ObjectArrayList)traccia_attivitaOri.get(traccia)).add(nome_attivita);
 				}
 			}
-		}
-		if (!flag) {
-			time += System.currentTimeMillis();
-		}     
-		ObjectArrayList<Edge> lista_archi_unfolded = g.getLista_archi();
-     
-		Graph graph = new Graph();
-     
-		Object[] keys = mapOri.keys;
-		int[] values = mapOri.values;
-     
-		for (int i = 0; i < mapOri.allocated.length; i++) {
+           return count;
+        }
+        
+        public static void gGAP2(ObjectIntOpenHashMap<String> mapOri, Object[] keys, int[] values, Graph graph){
+            for (int i = 0; i < mapOri.allocated.length; i++) {
 			if (mapOri.allocated[i] != false) {
 				String key = (String)keys[i];
 				Integer value = Integer.valueOf(values[i]);
@@ -2736,25 +2757,10 @@ public class CNMining
 					graph.getMap().put(node, new ObjectOpenHashSet());
 			}
 		}
-		keys = g.getMap().keys;
-     
-		Object[] vals = g.getMap().values;
-     
-		for (int i = 0; i < g.getMap().allocated.length; i++) {
-			if (g.getMap().allocated[i] != false) {
-				Node n = (Node)keys[i];
-         
-				ObjectOpenHashSet<Node> n_adjacents = (ObjectOpenHashSet)vals[i];
-         
-				int it1 = 0;
-	         
-				while (it1 < graph.listaNodi().size())
-				{
-					Node newnode = (Node)graph.listaNodi().get(it1);
-           
-					if (newnode.getNomeAttivita().equals(n.getNomeAttivita().split("#")[0]))
-					{
-						for (ObjectCursor<Node> n_k : n_adjacents)
+        }
+        
+        public static void gGAP3(Node n, ObjectOpenHashSet<Node> n_adjacents, Graph graph, ObjectArrayList<Edge> lista_archi_unfolded, Node newnode){
+            for (ObjectCursor<Node> n_k : n_adjacents)
 						{ 
 							int it = 0;
                
@@ -2779,6 +2785,50 @@ public class CNMining
 								it++;
 							}
 						}
+        }
+ 
+	public Graph getGrafoAggregato(Graph g, XLog log, boolean flag, ObjectIntOpenHashMap<String> mapOri, ObjectObjectOpenHashMap<String, ObjectArrayList<String>> attivita_tracceOri, ObjectObjectOpenHashMap<String, ObjectArrayList<String>> traccia_attivitaOri)
+	{
+		if (flag)
+		{
+                    
+			time += System.currentTimeMillis();
+                        
+			int count = 0;
+			count = gGAP1(count, log, traccia_attivitaOri, mapOri, attivita_tracceOri);
+			
+		}
+		if (!flag) {
+			time += System.currentTimeMillis();
+		}     
+		ObjectArrayList<Edge> lista_archi_unfolded = g.getLista_archi();
+     
+		Graph graph = new Graph();
+     
+		Object[] keys = mapOri.keys;
+		int[] values = mapOri.values;
+                gGAP2(mapOri, keys, values, graph);
+		
+		keys = g.getMap().keys;
+     
+		Object[] vals = g.getMap().values;
+     
+		for (int i = 0; i < g.getMap().allocated.length; i++) {
+			if (g.getMap().allocated[i] != false) {
+				Node n = (Node)keys[i];
+         
+				ObjectOpenHashSet<Node> n_adjacents = (ObjectOpenHashSet)vals[i];
+         
+				int it1 = 0;
+	         
+				while (it1 < graph.listaNodi().size())
+				{
+					Node newnode = (Node)graph.listaNodi().get(it1);
+           
+					if (newnode.getNomeAttivita().equals(n.getNomeAttivita().split("#")[0]))
+					{
+                                            gGAP3(n, n_adjacents, graph, lista_archi_unfolded, newnode);
+						
 					}           
 					it1++;
 				}
@@ -2803,6 +2853,37 @@ public class CNMining
 		System.out.println("Errore key non trovata per id " + value);
 		return null;
 	} 
+        
+        public static void cGFPP1(String s, ObjectIntOpenHashMap<String> folded_map, Graph g, HashMap<PetrinetNode, Node> hashmap, Transition t){
+            if (!s.startsWith("[")) {
+				if (s.contains("+")) {
+					s = s.split("\\+")[0];
+				}
+				if (folded_map.containsKey(s)) {
+					Node n = new Node(s, folded_map.get(s));
+					g.getMap().put(n, new ObjectOpenHashSet());
+           
+					hashmap.put(t, n);
+				}
+				else {
+					t.setInvisible(true);
+				}
+			} else {
+				t.setInvisible(true);
+			}
+        }
+        
+        public static void cGFPP2(Graph g, HashMap<PetrinetNode, Node> hashmap, Transition t){
+            if (!t.isInvisible()) {
+				Node n = (Node)hashmap.get(t);
+				for (Transition successor : t.getVisibleSuccessors()) {
+					if (!successor.isInvisible()) {
+						Node adjacent = (Node)hashmap.get(successor);
+						g.addEdge(n, adjacent, false);
+					}
+				}
+			}
+        }
  
 	public Graph createGraphFromPNML(String fileName, InputStream input, ObjectIntOpenHashMap<String> folded_map)
 		throws XmlPullParserException, IOException
@@ -2842,37 +2923,15 @@ public class CNMining
 		{
 			Transition t = (Transition)it.next();
 			String s = t.getLabel();
-       
-			if (!s.startsWith("[")) {
-				if (s.contains("+")) {
-					s = s.split("\\+")[0];
-				}
-				if (folded_map.containsKey(s)) {
-					Node n = new Node(s, folded_map.get(s));
-					g.getMap().put(n, new ObjectOpenHashSet());
-           
-					hashmap.put(t, n);
-				}
-				else {
-					t.setInvisible(true);
-				}
-			} else {
-				t.setInvisible(true);
-			}
+                        cGFPP1(s, folded_map, g, hashmap, t);
+			
 		}
 		it = petrinet.getTransitions().iterator();
      
 		while (it.hasNext()) {
 			Transition t = (Transition)it.next();
-			if (!t.isInvisible()) {
-				Node n = (Node)hashmap.get(t);
-				for (Transition successor : t.getVisibleSuccessors()) {
-					if (!successor.isInvisible()) {
-						Node adjacent = (Node)hashmap.get(successor);
-						g.addEdge(n, adjacent, false);
-					}
-				}
-			}
+                        cGFPP2(g, hashmap, t);
+			
 		}
 		return g;
 	}
@@ -2899,24 +2958,9 @@ public class CNMining
      
 		return predecessors_traccia;
 	}   
- 
-	public ObjectArrayList<Edge> removableEdges(Graph g, double[][] cs, ObjectArrayList<Constraint> folded_vincoli_positivi, ObjectIntOpenHashMap<String> folded_map, double relative_to_best)
-	{
-		ObjectArrayList<Edge> removableEdges = new ObjectArrayList();
-		ObjectArrayList<Edge> listaArchi = new ObjectArrayList(g.getLista_archi());
-		
-		for (ObjectCursor<Edge> ee : listaArchi) {
-			Edge e = (Edge)ee.value;
         
-			if ((verificaVincoliPositivi(g, e.getX(), e.getY(), folded_vincoli_positivi, folded_map)) && 
-				(bestScore(g, e.getX(), e.getY(), cs) > relative_to_best))
-			{
-				ObjectIntOpenHashMap<IntOpenHashSet> obX = e.getX().getOutput();
-         
-				ObjectIntOpenHashMap<IntOpenHashSet> ibY = e.getY().getInput();
-				Object[] keys = obX.keys;
-         
-				for (int i = 0; i < obX.allocated.length; i++) {
+        public static void rEP1(ObjectIntOpenHashMap<IntOpenHashSet> obX, ObjectIntOpenHashMap<IntOpenHashSet> ibY, Object[] keys, Edge e){
+            for (int i = 0; i < obX.allocated.length; i++) {
 					if (obX.allocated[i] != false) {
 						IntOpenHashSet ts = (IntOpenHashSet)keys[i];
 						if ((ts.contains(e.getY().getID_attivita())) && (ts.size() == 1))
@@ -2932,6 +2976,26 @@ public class CNMining
 						}
 					}
 				}
+        }
+ 
+	public ObjectArrayList<Edge> removableEdges(Graph g, double[][] cs, ObjectArrayList<Constraint> folded_vincoli_positivi, ObjectIntOpenHashMap<String> folded_map, double relative_to_best)
+	{
+		ObjectArrayList<Edge> removableEdges = new ObjectArrayList();
+		ObjectArrayList<Edge> listaArchi = new ObjectArrayList(g.getLista_archi());
+		
+		for (ObjectCursor<Edge> ee : listaArchi) {
+			Edge e = (Edge)ee.value;
+        
+			if ((verificaVincoliPositivi(g, e.getX(), e.getY(), folded_vincoli_positivi, folded_map)) && 
+				(bestScore(g, e.getX(), e.getY(), cs) > relative_to_best))
+			{
+                            
+				ObjectIntOpenHashMap<IntOpenHashSet> obX = e.getX().getOutput();
+         
+				ObjectIntOpenHashMap<IntOpenHashSet> ibY = e.getY().getInput();
+				Object[] keys = obX.keys;
+                                rEP1(obX, ibY, keys, e);
+				
 				removableEdges.add(e);
 			}
 		}
@@ -2987,30 +3051,8 @@ public class CNMining
 		return successors_traccia;
 	}
    
-	public void rimuoviDipendenzeIndirette(Graph g, ObjectIntOpenHashMap<String> map, ObjectObjectOpenHashMap<String, ObjectArrayList<String>> attivita_tracce, ObjectObjectOpenHashMap<String, ObjectArrayList<String>> traccia_attivita, double[][] cs, double sigma_2, ObjectArrayList<Constraint> vincoli_positivi)
-	{
-		ObjectArrayList<Node> adjacents;
-    
-		int cursor = 0;
-		Iterator localIterator1 = g.listaNodi().iterator();
-		do
-		{	
-			ObjectCursor<Node> nn = (ObjectCursor)localIterator1.next();
-			Node n = (Node)nn.value;
-			adjacents = g.adjacentNodes(n);
-			adjacents.trimToSize();
-				       
-			if(cursor >= adjacents.size())
-				continue;
-				
-			Node adjacent_i = (Node)adjacents.get(cursor);
-			if ((n.getOuter_degree() == 1) || (adjacent_i.getInner_degree() == 1)) {
-				cursor++;
-			}
-			else {
-				ObjectOpenHashSet<String> candidati = new ObjectOpenHashSet();
-				         
-				for (ObjectCursor<Node> mm : g.listaNodi()) {
+        public static void rDIP1(Graph g, Node n, Node adjacent_i, ObjectOpenHashSet<String> candidati){
+            for (ObjectCursor<Node> mm : g.listaNodi()) {
 					Node m = (Node)mm.value;
 				           
 					if ((!m.equals(n)) && (!m.equals(adjacent_i)))
@@ -3031,14 +3073,11 @@ public class CNMining
 							candidati.add(m.getNomeAttivita());
 						}
 					}
-				}				     
-				if (candidati.size() > 0)
-				{
-					if (!verificaVincoliPositivi(g, n, adjacent_i, vincoli_positivi, map))
-					{
-						cursor++;
-						continue;
-					}
+				}
+        }
+        
+        public static void rDIP2(Graph g, Node n, Node adjacent_i, ObjectArrayList<Constraint> vincoli_positivi, ObjectIntOpenHashMap<String> map, ObjectObjectOpenHashMap<String, ObjectArrayList<String>> attivita_tracce, ObjectObjectOpenHashMap<String, ObjectArrayList<String>> traccia_attivita, ObjectOpenHashSet<String> candidati, double sigma_2){
+           
 					ObjectArrayList<String> lista_tracce_n = new ObjectArrayList((ObjectContainer)attivita_tracce.get(n.getNomeAttivita()));
 					lista_tracce_n.trimToSize();
 				           
@@ -3075,7 +3114,44 @@ public class CNMining
 				   
 						n.decr_Outer_degree();
 						adjacent_i.decr_Inner_degree();
+					} 
+        }
+        
+	public void rimuoviDipendenzeIndirette(Graph g, ObjectIntOpenHashMap<String> map, ObjectObjectOpenHashMap<String, ObjectArrayList<String>> attivita_tracce, ObjectObjectOpenHashMap<String, ObjectArrayList<String>> traccia_attivita, double[][] cs, double sigma_2, ObjectArrayList<Constraint> vincoli_positivi)
+	{
+		ObjectArrayList<Node> adjacents;
+    
+		int cursor = 0;
+		Iterator localIterator1 = g.listaNodi().iterator();
+		do
+		{	
+			ObjectCursor<Node> nn = (ObjectCursor)localIterator1.next();
+			Node n = (Node)nn.value;
+			adjacents = g.adjacentNodes(n);
+			adjacents.trimToSize();
+				       
+			if(cursor >= adjacents.size())
+				continue;
+				
+			Node adjacent_i = (Node)adjacents.get(cursor);
+			if ((n.getOuter_degree() == 1) || (adjacent_i.getInner_degree() == 1)) {
+				cursor++;
+			}
+			else {
+				ObjectOpenHashSet<String> candidati = new ObjectOpenHashSet();
+				
+                                rDIP1(g, n, adjacent_i, candidati);
+								     
+				if (candidati.size() > 0)
+				{
+                                    if (!verificaVincoliPositivi(g, n, adjacent_i, vincoli_positivi, map))
+					{
+						cursor++;
+						continue;
 					}
+                                    
+                                    rDIP2(g, n, adjacent_i, vincoli_positivi, map, attivita_tracce, traccia_attivita, candidati, sigma_2);
+					
 				}
 				cursor++;
 			}
@@ -3083,22 +3159,9 @@ public class CNMining
 		}
 		while(localIterator1.hasNext());
 	}
- 
-	public boolean verificaVincoliPositivi(Graph graph, Node np, Node nr, ObjectArrayList<Constraint> vincoli_positivi, ObjectIntOpenHashMap<String> map)
-	{
-		if ((np != null) && (nr != null)) {
-			graph.removeEdge(np, nr);
-		}
-		for (ObjectCursor<Constraint> cc : vincoli_positivi)
-		{
-			Constraint c = (Constraint)cc.value;
-       
-			boolean path_constraint = c.isPathConstraint();
-       
-			boolean vincolo_soddisfatto = false;
-			Iterator localIterator3 = c.getBodyList().iterator();
-			Iterator localIterator2 = c.getHeadList().iterator();
-			while(localIterator2.hasNext() && localIterator3.hasNext()){
+        
+        public static boolean vVPP1(boolean path_constraint, Iterator localIterator2, Iterator localIterator3, Graph graph, ObjectIntOpenHashMap<String> map, boolean vincolo_soddisfatto){
+            while(localIterator2.hasNext() && localIterator3.hasNext()){
 				String head = (String)localIterator2.next();
 					         
 				Node nHead = graph.getNode(head, map.get(head));
@@ -3127,6 +3190,25 @@ public class CNMining
 					}
 				}
 			}
+            return vincolo_soddisfatto;
+        }
+ 
+	public boolean verificaVincoliPositivi(Graph graph, Node np, Node nr, ObjectArrayList<Constraint> vincoli_positivi, ObjectIntOpenHashMap<String> map)
+	{
+		if ((np != null) && (nr != null)) {
+			graph.removeEdge(np, nr);
+		}
+		for (ObjectCursor<Constraint> cc : vincoli_positivi)
+		{
+			Constraint c = (Constraint)cc.value;
+       
+			boolean path_constraint = c.isPathConstraint();
+       
+			boolean vincolo_soddisfatto = false;
+			Iterator localIterator3 = c.getBodyList().iterator();
+			Iterator localIterator2 = c.getHeadList().iterator();
+                        vincolo_soddisfatto = vVPP1(localIterator2, localIterator3, graph, map, vincolo_soddisfatto);
+			
 			if (!vincolo_soddisfatto)
 			{
 				if ((np != null) && (nr != null))
@@ -3139,6 +3221,91 @@ public class CNMining
 			graph.addEdge(np, nr, false);
 		return true;
 	} 
+        
+        public static void cBP1(int i, ObjectArrayList<String> traccia, Graph g, String activity, ObjectIntOpenHashMap<String> map, boolean verificato, IntOpenHashSet[] outputBindings, IntOpenHashSet[] inputBindings, IntArrayList[] outputBindingsExtended, IntArrayList[] inputBindingsExtended){
+            for (int j = i + 1; j < traccia.size(); j++)
+					{
+						String successor = (String)traccia.get(j);
+             
+						if (g.isConnected(new Node(activity, map.get(activity)), new Node(successor, map.get(successor))))
+						{
+							if (!verificato)
+							{
+								if (!outputBindings[i].contains(map.get(successor)))
+									outputBindings[i].add(map.get(successor));
+								if (!inputBindings[j].contains(map.get(activity))) {
+									inputBindings[j].add(map.get(activity));
+								}
+                 
+								outputBindingsExtended[i].add(map.get(successor));
+                 
+								inputBindingsExtended[j].add(map.get(activity));
+                 
+								verificato = true; 
+							}
+							else
+							{
+								outputBindingsExtended[i].add(map.get(successor));
+                 
+								inputBindingsExtended[j].add(map.get(activity));
+							}
+						}
+					}   
+        }
+        
+        public static void cBP2(int i, ObjectArrayList<String> traccia, Graph g, String activity, ObjectIntOpenHashMap<String> map, boolean verificato, IntOpenHashSet[] outputBindings, IntOpenHashSet[] inputBindings, IntArrayList[] outputBindingsExtended, IntArrayList[] inputBindingsExtended){
+            for (int j = i - 1; j >= 0; j--)
+					{
+						String predecessor = (String)traccia.get(j);
+             
+						if (g.isConnected(new Node(predecessor, map.get(predecessor)), new Node(activity, map.get(activity))))
+						{
+							if (!verificato)
+							{
+								if (!outputBindings[j].contains(map.get(activity))) {
+									outputBindings[j].add(map.get(activity));
+								}
+								if (!inputBindings[i].contains(map.get(predecessor))) {
+									inputBindings[i].add(map.get(predecessor));
+								}
+                 
+								inputBindingsExtended[i].add(map.get(predecessor));
+                 
+								outputBindingsExtended[j].add(map.get(activity));
+								
+								verificato = true;
+ 
+							}
+							else
+							{
+								inputBindingsExtended[i].add(map.get(predecessor));
+                 
+								outputBindingsExtended[j].add(map.get(activity));
+							}
+						}
+					}
+        }
+        
+        public static void cBP3(int[] activitiesIDMapping, Graph g, ObjectIntOpenHashMap<String> map, IntOpenHashSet[] outputBindings, IntOpenHashSet[] inputBindings, IntArrayList[] outputBindingsExtended, IntArrayList[] inputBindingsExtended){
+            for (int k = 0; k < activitiesIDMapping.length; k++)
+				{
+					if (!g.getNode(getKeyByValue(map, activitiesIDMapping[k]), activitiesIDMapping[k]).getOutput().containsKey(outputBindings[k])) {
+						g.getNode(getKeyByValue(map, activitiesIDMapping[k]), activitiesIDMapping[k]).getOutput().put(outputBindings[k], 1);
+					}           
+					if (!g.getNode(getKeyByValue(map, activitiesIDMapping[k]), activitiesIDMapping[k]).getInput().containsKey(inputBindings[k]))
+					{
+						g.getNode(getKeyByValue(map, activitiesIDMapping[k]), activitiesIDMapping[k]).getInput().put(inputBindings[k], 1);
+					}
+					if (!g.getNode(getKeyByValue(map, activitiesIDMapping[k]), activitiesIDMapping[k]).getExtendedOutput().containsKey(outputBindingsExtended[k]))
+					{
+						g.getNode(getKeyByValue(map, activitiesIDMapping[k]), activitiesIDMapping[k]).getExtendedOutput().put(outputBindingsExtended[k], 1);
+					}           
+					if (!g.getNode(getKeyByValue(map, activitiesIDMapping[k]), activitiesIDMapping[k]).getExtendedInput().containsKey(inputBindingsExtended[k]))
+					{
+						g.getNode(getKeyByValue(map, activitiesIDMapping[k]), activitiesIDMapping[k]).getExtendedInput().put(inputBindingsExtended[k], 1);
+					}
+				}
+        }
  
 	public void computeBindings(Graph g, ObjectObjectOpenHashMap<String, ObjectArrayList<String>> traccia_attivita, ObjectIntOpenHashMap<String> map)
 	{
@@ -3169,87 +3336,14 @@ public class CNMining
 					activitiesIDMapping[i] = map.get(activity);
            
 					boolean verificato = false;
-            
-					for (int j = i + 1; j < traccia.size(); j++)
-					{
-						String successor = (String)traccia.get(j);
-             
-						if (g.isConnected(new Node(activity, map.get(activity)), new Node(successor, map.get(successor))))
-						{
-							if (!verificato)
-							{
-								if (!outputBindings[i].contains(map.get(successor)))
-									outputBindings[i].add(map.get(successor));
-								if (!inputBindings[j].contains(map.get(activity))) {
-									inputBindings[j].add(map.get(activity));
-								}
-                 
-								outputBindingsExtended[i].add(map.get(successor));
-                 
-								inputBindingsExtended[j].add(map.get(activity));
-                 
-								verificato = true; 
-							}
-							else
-							{
-								outputBindingsExtended[i].add(map.get(successor));
-                 
-								inputBindingsExtended[j].add(map.get(activity));
-							}
-						}
-					}           
+                                        cBP1(i, traccia, g, activity, map, verificato, outputBindings, inputBindings, outputBindingsExtended, inputBindingsExtended);
+					      
 					verificato = false;
- 
-					for (int j = i - 1; j >= 0; j--)
-					{
-						String predecessor = (String)traccia.get(j);
-             
-						if (g.isConnected(new Node(predecessor, map.get(predecessor)), new Node(activity, map.get(activity))))
-						{
-							if (!verificato)
-							{
-								if (!outputBindings[j].contains(map.get(activity))) {
-									outputBindings[j].add(map.get(activity));
-								}
-								if (!inputBindings[i].contains(map.get(predecessor))) {
-									inputBindings[i].add(map.get(predecessor));
-								}
-                 
-								inputBindingsExtended[i].add(map.get(predecessor));
-                 
-								outputBindingsExtended[j].add(map.get(activity));
-								
-								verificato = true;
- 
-							}
-							else
-							{
-								inputBindingsExtended[i].add(map.get(predecessor));
-                 
-								outputBindingsExtended[j].add(map.get(activity));
-							}
-						}
-					}
+                                        cBP2(i, traccia, g, activity, map, verificato, outputBindings, inputBindings, outputBindingsExtended, inputBindingsExtended);
+					
 				}
-         
-				for (int k = 0; k < activitiesIDMapping.length; k++)
-				{
-					if (!g.getNode(getKeyByValue(map, activitiesIDMapping[k]), activitiesIDMapping[k]).getOutput().containsKey(outputBindings[k])) {
-						g.getNode(getKeyByValue(map, activitiesIDMapping[k]), activitiesIDMapping[k]).getOutput().put(outputBindings[k], 1);
-					}           
-					if (!g.getNode(getKeyByValue(map, activitiesIDMapping[k]), activitiesIDMapping[k]).getInput().containsKey(inputBindings[k]))
-					{
-						g.getNode(getKeyByValue(map, activitiesIDMapping[k]), activitiesIDMapping[k]).getInput().put(inputBindings[k], 1);
-					}
-					if (!g.getNode(getKeyByValue(map, activitiesIDMapping[k]), activitiesIDMapping[k]).getExtendedOutput().containsKey(outputBindingsExtended[k]))
-					{
-						g.getNode(getKeyByValue(map, activitiesIDMapping[k]), activitiesIDMapping[k]).getExtendedOutput().put(outputBindingsExtended[k], 1);
-					}           
-					if (!g.getNode(getKeyByValue(map, activitiesIDMapping[k]), activitiesIDMapping[k]).getExtendedInput().containsKey(inputBindingsExtended[k]))
-					{
-						g.getNode(getKeyByValue(map, activitiesIDMapping[k]), activitiesIDMapping[k]).getExtendedInput().put(inputBindingsExtended[k], 1);
-					}
-				}
+                                cBP3(activitiesIDMapping, g, map, outputBindings, inputBindings, outputBindingsExtended, inputBindingsExtended);
+				
 			}
 		}
      
