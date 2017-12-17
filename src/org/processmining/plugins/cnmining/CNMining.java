@@ -1586,6 +1586,13 @@ public class CNMining
 			}
             return atLeastOnePath;
         }
+        
+        public ObjectArrayList<Node> setPath(ObjectArrayList<Node> path){
+            if (path == null){
+		        path = new ObjectArrayList<Node>();
+            }
+            return path;
+        }
  
 	private boolean bfs(Graph graph, Node x, Node y, Node f, ObjectArrayList<Node> path)
 	{
@@ -1594,8 +1601,10 @@ public class CNMining
 		if (x.equals(y)) {
 			if (graph.isConnected(x, y))
 				return true;
-			if (path == null)
-		        path = new ObjectArrayList<Node>();
+                        
+                        path = setPath(path);
+                        
+			
 		}
 		ObjectArrayList<Node> nodes = new ObjectArrayList<Node>();
 		nodes.add(x);
@@ -3170,4 +3179,3 @@ public class CNMining
 		}
 	}
 }
-
