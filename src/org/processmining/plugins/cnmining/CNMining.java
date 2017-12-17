@@ -1573,6 +1573,19 @@ public class CNMining
      
 		return attivita_candidate;
 	}
+        
+        public boolean findAtLeastOnePath(Node t, Node x, Node y, ObjectArrayList<Node> path, boolean atLeastOnePath){
+            if (t.equals(y)) {
+				if (x.equals(y)) {
+					if (path.size() > 1) {
+						atLeastOnePath = true;
+					}
+				} else {
+				atLeastOnePath = true;
+				}
+			}
+            return atLeastOnePath;
+        }
  
 	private boolean bfs(Graph graph, Node x, Node y, Node f, ObjectArrayList<Node> path)
 	{
@@ -1596,15 +1609,10 @@ public class CNMining
 			if (path != null) {
 				path.add(t);
 			}
-			if (t.equals(y)) {
-				if (x.equals(y)) {
-					if (path.size() > 1) {
-						atLeastOnePath = true;
-					}
-				} else {
-				atLeastOnePath = true;
-				}
-			}
+                        
+                        atLeastOnePath = findAtLeastOnePath(t, x, y, path, atLeastOnePath);
+                        
+			
 			if(i < graph.adjacentNodes(t).size())			
 			{
 				Node k = (Node)graph.adjacentNodes(t).get(i);
@@ -1652,6 +1660,47 @@ public class CNMining
      
 		return mNext;
 	}
+        
+        public double [][] funzPredecessors(double[][] mNext, ObjectArrayList<String> predecessors, double[][] cs, ObjectIntOpenHashMap<String> map, String activity_x, double bestPredCS, String bestPred, ObjectArrayList<Forbidden> lista_forbidden_unfolded){
+            int itPred = 0;
+						Object[] buffer = predecessors.buffer;
+						while (itPred < predecessors.size()) {
+							String pred = (String)buffer[itPred];
+               
+							double predCS = cs[map.get(pred)][map.get(activity_x)];
+               
+							if ((predCS > bestPredCS) && (!lista_forbidden_unfolded.contains(new Forbidden(pred, activity_x)))) {
+								bestPred = pred;
+								bestPredCS = predCS;
+							}
+							itPred++;
+						}
+             
+						int x = map.get(bestPred);
+						int y = map.get(activity_x);
+						mNext[x][y] += 1.0D;
+                                                return mNext;
+        }
+        
+        public double [][] funzSuccessors(double[][] mNext, ObjectArrayList<String> successors, double[][] cs, ObjectIntOpenHashMap<String> map, String activity_x, double bestSuccCS, String bestSucc, ObjectArrayList<Forbidden> lista_forbidden_unfolded){
+            int itSucc = 0;
+						Object[] buffer = successors.buffer;
+						while (itSucc < successors.size()) {
+							String succ = (String)buffer[itSucc];
+							double succCS = cs[map.get(activity_x)][map.get(succ)];
+               
+							if ((succCS > bestSuccCS) && (!lista_forbidden_unfolded.contains(new Forbidden(activity_x, succ)))) {
+								bestSucc = succ;
+								bestSuccCS = succCS;
+							}
+							itSucc++;
+						}             
+						int x = map.get(activity_x);
+						int y = map.get(bestSucc);
+             
+						mNext[x][y] += 1.0D;
+                                                return mNext;
+        }
 	
 	public double[][] buildBestNextMatrix(XLog log, ObjectIntOpenHashMap<String> map, ObjectObjectOpenHashMap<String, ObjectArrayList<String>> traccia_attivita, double[][] cs, ObjectArrayList<Forbidden> lista_forbidden_unfolded)
 	{
@@ -1684,43 +1733,18 @@ public class CNMining
            
 					if (predecessors.size() > 0)
 					{
-						int itPred = 0;
-						Object[] buffer = predecessors.buffer;
-						while (itPred < predecessors.size()) {
-							String pred = (String)buffer[itPred];
-               
-							double predCS = cs[map.get(pred)][map.get(activity_x)];
-               
-							if ((predCS > bestPredCS) && (!lista_forbidden_unfolded.contains(new Forbidden(pred, activity_x)))) {
-								bestPred = pred;
-								bestPredCS = predCS;
-							}
-							itPred++;
-						}
-             
-						int x = map.get(bestPred);
-						int y = map.get(activity_x);
-						mNext[x][y] += 1.0D;
+                                            
+                                            mNext = funzPredecessors(mNext, predecessors, cs, map, activity_x, bestPredCS, lista_forbidden_unfolded);
+                                            
+						
 					}
            
 					if (successors.size() > 0)
 					{
-						int itSucc = 0;
-						Object[] buffer = successors.buffer;
-						while (itSucc < successors.size()) {
-							String succ = (String)buffer[itSucc];
-							double succCS = cs[map.get(activity_x)][map.get(succ)];
-               
-							if ((succCS > bestSuccCS) && (!lista_forbidden_unfolded.contains(new Forbidden(activity_x, succ)))) {
-								bestSucc = succ;
-								bestSuccCS = succCS;
-							}
-							itSucc++;
-						}             
-						int x = map.get(activity_x);
-						int y = map.get(bestSucc);
-             
-						mNext[x][y] += 1.0D;
+                                            
+                                            mNext = funzSuccessors(mNext, successors, cs, map, activity_x, bestSuccCS, bestSucc, lista_forbidden_unfolded);
+                                            
+						
 					}
            
 					predecessors.add(activity_x);
@@ -3129,6 +3153,7 @@ public class CNMining
 			}
 		}
      
+                
 		for (ObjectCursor<Edge> ee : g.getLista_archi()) {
 			Edge e = (Edge)ee.value;
 			if (e.isFlag())
@@ -3145,5 +3170,4 @@ public class CNMining
 		}
 	}
 }
-
 
